@@ -1,0 +1,2683 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Energy Plan Optimizer — Texas</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1/dist/auth0-spa-js.production.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Light (default) ──────────────────────────────────── */
+    :root {
+      --bg:           #faf9f6;
+      --bg-warm:      #f5f3ee;
+      --surface:      #ffffff;
+      --surface-2:    #f7f6f3;
+      --border:       #e8e5df;
+      --border-hi:    #d5d0c7;
+      --accent:       #d97706;
+      --accent-2:     #b45309;
+      --accent-dim:   rgba(217, 119, 6, 0.08);
+      --accent-glow:  rgba(217, 119, 6, 0.04);
+      --cyan:         #0284c7;
+      --cyan-dim:     rgba(2, 132, 199, 0.08);
+      --text:         #1a1714;
+      --text-sub:     #3d3830;
+      --text-muted:   #766f63;
+      --text-dim:     #a09890;
+      --red:          #dc2626;
+      --red-dim:      rgba(220, 38, 38, 0.07);
+      --shadow:       0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+      --shadow-lg:    0 2px 8px rgba(0,0,0,.07), 0 12px 40px rgba(0,0,0,.08);
+    }
+
+    /* ── Dark ─────────────────────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:           #0c1220;
+      --bg-warm:      #0f1828;
+      --surface:      #131e32;
+      --surface-2:    #192538;
+      --border:       #1f2f47;
+      --border-hi:    #2c4060;
+      --accent:       #f59e0b;
+      --accent-2:     #fbbf24;
+      --accent-dim:   rgba(245, 158, 11, 0.10);
+      --accent-glow:  rgba(245, 158, 11, 0.04);
+      --cyan:         #38bdf8;
+      --cyan-dim:     rgba(56, 189, 248, 0.10);
+      --text:         #eef2f9;
+      --text-sub:     #c8d4e4;
+      --text-muted:   #7f92a8;
+      --text-dim:     #4f6478;
+      --red:          #f87171;
+      --red-dim:      rgba(248, 113, 113, 0.08);
+      --shadow:       0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
+      --shadow-lg:    0 2px 8px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.3);
+    }
+
+    /* ── Base ─────────────────────────────────────────────── */
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+    /* ── Page animations ──────────────────────────────────── */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim-1 { animation: rise 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+    .anim-2 { animation: rise 0.55s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
+    .anim-3 { animation: rise 0.55s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
+
+    /* ── Shell ────────────────────────────────────────────── */
+    .shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 52px 24px 96px;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 56px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+
+    .logo-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .logo-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: var(--accent);
+      transition: fill 0.3s;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.1;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    /* ── Header auth zone ─────────────────────────────────── */
+    .header-auth {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      margin-right: 12px;
+    }
+    .auth-user-email {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Auth modal ───────────────────────────────────────── */
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 400px;
+      padding: 32px;
+      position: relative;
+      transform: translateY(20px) scale(0.98);
+      transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
+    }
+    .modal-overlay.open .auth-box { transform: translateY(0) scale(1); }
+    .auth-modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .auth-tabs {
+      display: flex;
+      background: var(--surface-2);
+      border-radius: 100px;
+      padding: 3px;
+      gap: 2px;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .auth-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .auth-field { margin-bottom: 16px; }
+    .auth-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .auth-field input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .auth-field input:focus { border-color: var(--accent); }
+    .auth-err {
+      background: var(--red-dim);
+      border: 1px solid var(--red);
+      border-radius: 10px;
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Resume card ──────────────────────────────────────── */
+    .resume-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(217,119,6,0.35);
+      border-radius: 16px;
+      padding: 18px 22px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    [data-theme="dark"] .resume-card { border-color: rgba(245,158,11,0.3); }
+    .resume-icon { font-size: 22px; flex-shrink: 0; }
+    .resume-info { flex: 1; min-width: 0; }
+    .resume-title { font-size: 14px; font-weight: 800; color: var(--accent-2); margin-bottom: 2px; }
+    [data-theme="dark"] .resume-title { color: var(--accent); }
+    .resume-meta { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .resume-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 9px 20px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      box-shadow: var(--shadow);
+    }
+    .theme-toggle:hover { color: var(--text); border-color: var(--border-hi); }
+
+    /* ── Step tracker ─────────────────────────────────────── */
+    .steps {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .step-item { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .step-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-hi);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-dim);
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .step-dot.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .step-dot.done {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--surface);
+      font-size: 14px;
+    }
+
+    .step-label {
+      font-size: 13px; font-weight: 600;
+      color: var(--text-dim);
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+    .step-item.active .step-label { color: var(--text-sub); }
+
+    .step-connector {
+      flex: 1; height: 1px;
+      background: var(--border);
+      margin: 0 16px;
+      min-width: 24px;
+      transition: background 0.4s;
+    }
+    .step-connector.done { background: var(--accent); }
+
+    /* ── Card ─────────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Card header ──────────────────────────────────────── */
+    .card-top {
+      padding: 52px 56px 0;
+      position: relative;
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(217,119,6,0.2);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 20px;
+    }
+    [data-theme="dark"] .step-badge {
+      border-color: rgba(245,158,11,0.2);
+    }
+
+    .card-heading {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .card-sub {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 520px;
+      margin-bottom: 0;
+    }
+
+    .card-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 36px 56px 0;
+    }
+
+    .card-body { padding: 36px 56px 56px; }
+
+    /* ── Ghost step number ────────────────────────────────── */
+    .ghost-num {
+      position: absolute;
+      top: 24px;
+      right: 48px;
+      font-size: 160px;
+      font-weight: 800;
+      letter-spacing: -0.06em;
+      line-height: 1;
+      color: var(--border);
+      user-select: none;
+      pointer-events: none;
+      opacity: 0.6;
+      [data-theme="dark"] & { opacity: 0.4; }
+    }
+    [data-theme="dark"] .ghost-num { opacity: 0.35; }
+
+    /* ── Loading overlay ──────────────────────────────────── */
+    .loading-overlay {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(250,249,246,0.88);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+      z-index: 20;
+      border-radius: 20px;
+    }
+    [data-theme="dark"] .loading-overlay {
+      background: rgba(12,18,32,0.88);
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-inner { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    .loading-text {
+      font-size: 15px; font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Drop zone ────────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border-hi);
+      border-radius: 16px;
+      padding: 72px 48px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      background: var(--bg);
+    }
+    [data-theme="dark"] .drop-zone { background: var(--surface-2); }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+    }
+    .drop-icon { font-size: 48px; display: block; margin-bottom: 20px; }
+    .drop-primary {
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .drop-secondary {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* ── Instructions ─────────────────────────────────────── */
+    .instructions {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 22px 26px;
+      margin-bottom: 28px;
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      border: 1px solid var(--border);
+    }
+    .instructions ol { padding-left: 20px; }
+    .instructions li { margin-bottom: 6px; }
+    .instructions a { color: var(--accent); text-decoration: none; font-weight: 700; }
+    .instructions a:hover { text-decoration: underline; }
+    .instructions strong { color: var(--text); font-weight: 700; }
+
+    /* ── Fields ───────────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .field input {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      padding: 14px 18px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--text-dim); }
+
+    /* ── Meter detail boxes ───────────────────────────────── */
+    .meter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .meter-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+    }
+    .meter-box-label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .meter-box-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 16px; font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      padding: 15px 32px;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    [data-theme="light"] .btn:not(.btn-ghost) { color: #fff; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-sub);
+      border: 1px solid var(--border-hi);
+      border-radius: 100px;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent); opacity: 1; transform: none; }
+    .btn-sm { padding: 10px 22px; font-size: 13px; }
+
+    /* ── Messages ─────────────────────────────────────────── */
+    .msg {
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 16px;
+      display: none;
+      line-height: 1.6;
+    }
+    .msg.error {
+      background: var(--red-dim);
+      border: 1px solid rgba(220,38,38,0.15);
+      color: var(--red);
+      display: block;
+    }
+    .msg.info {
+      background: var(--accent-dim);
+      border: 1px solid rgba(217,119,6,0.15);
+      color: var(--accent);
+      display: block;
+    }
+
+    /* ── Stats grid ───────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 44px;
+    }
+
+    .stat {
+      background: var(--surface);
+      padding: 28px 26px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stat-label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .stat-value {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .stat-value span {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Charts ───────────────────────────────────────────── */
+    .chart-section { margin-bottom: 36px; }
+
+    .charts-duo {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      margin-bottom: 36px;
+      align-items: start;
+    }
+    .charts-duo .chart-section { margin-bottom: 0; }
+
+    @media (max-width: 760px) {
+      .charts-duo { grid-template-columns: 1fr; }
+    }
+
+    .chart-label {
+      font-size: 12px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    .chart-wrap {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 24px 20px;
+      height: 256px;
+    }
+
+    .chart-wrap--hourly { height: 256px; }
+
+    .chart-wrap--pie {
+      height: 256px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .legend-swatch {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── Table ────────────────────────────────────────────── */
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 36px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 16px 20px;
+      text-align: left;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+    thead th:not(:first-child) { text-align: right; }
+
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+
+    td {
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    td:not(:first-child) { text-align: right; }
+
+    td.hi { color: var(--accent); font-weight: 700; }
+    td.lo { color: var(--text-dim); }
+    td.month-cell { color: var(--text); font-weight: 700; }
+    td.day-cell   { color: var(--accent); font-weight: 600; }
+    td.night-cell { color: var(--cyan); font-weight: 600; }
+
+    tfoot td {
+      padding: 16px 20px;
+      font-size: 14px; font-weight: 700;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+    }
+    tfoot td:not(:first-child) { text-align: right; color: var(--text); }
+
+    /* ── CTA block ────────────────────────────────────────── */
+    .cta-block {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 0;
+    }
+
+    .cta-block.accent-border { border-color: var(--accent); background: var(--accent-dim); }
+
+    .cta-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .cta-sub {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── Restart row ──────────────────────────────────────── */
+    .restart-row {
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .restart-label { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+
+    /* ── Plans ────────────────────────────────────────────── */
+    .context-strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 22px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .context-strip strong { color: var(--text); font-weight: 700; }
+
+    .night-callout {
+      background: var(--cyan-dim);
+      border: 1px solid rgba(2,132,199,0.15);
+      border-radius: 12px;
+      padding: 16px 22px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--cyan);
+      line-height: 1.65;
+    }
+    [data-theme="dark"] .night-callout {
+      border-color: rgba(56,189,248,0.15);
+    }
+
+    .zip-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      margin-bottom: 24px;
+    }
+    .zip-row .field { width: 200px; flex-shrink: 0; }
+
+    .filter-row {
+      display: flex;
+      gap: 10px 16px;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .filter-label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .filter-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-muted);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 13px; font-weight: 600;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--border-hi); color: var(--text-sub); }
+    .filter-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .plans-count { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: auto; }
+
+    .filter-select {
+      appearance: none;
+      background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 10px center;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 32px 7px 14px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .filter-select:hover { border-color: var(--border-hi); color: var(--text); }
+    .filter-select:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Company filter dropdown ──────────────────────────── */
+    .company-filter-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .company-filter-wrap .filter-btn { white-space: nowrap; }
+    .company-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      z-index: 200;
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      padding: 14px;
+      min-width: 230px;
+      max-height: 300px;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    .company-panel.open { display: flex; }
+    .company-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+    .company-panel-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .company-clear {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: opacity 0.15s;
+    }
+    .company-clear:hover { opacity: 0.7; }
+    .company-search {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      outline: none;
+      flex-shrink: 0;
+      transition: border-color 0.15s;
+    }
+    .company-search:focus { border-color: var(--accent); }
+    .company-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .company-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 5px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .company-item:hover { background: var(--accent-dim); }
+    .company-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .company-item label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      flex: 1;
+      line-height: 1.3;
+    }
+    .company-no-results {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    /* ── Pagination ───────────────────────────────────────── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 20px 0 8px;
+    }
+    .page-info {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* ── Plan detail modal ────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 32px;
+      transform: translateY(20px) scale(0.98);
+      transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
+    }
+    .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .modal-co { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+    .modal-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); line-height: 1.2; }
+    .modal-close {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .modal-close:hover { border-color: var(--border-hi); color: var(--text); }
+    .modal-stats {
+      display: flex;
+      background: var(--surface-2);
+      border-radius: 16px;
+      padding: 18px 0;
+      margin-bottom: 28px;
+    }
+    .modal-stat { flex: 1; text-align: center; }
+    .modal-stat + .modal-stat { border-left: 1px solid var(--border); }
+    .modal-stat-val { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1; margin-bottom: 4px; }
+    .modal-stat-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+    .modal-chart-wrap { height: 210px; position: relative; margin-bottom: 12px; }
+    .modal-legend {
+      display: flex; gap: 20px; justify-content: center;
+      margin-bottom: 24px;
+    }
+    .modal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .modal-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .modal-breakdown {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .modal-breakdown th {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 0 10px 10px; border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+    .modal-breakdown th:first-child { text-align: left; padding-left: 0; }
+    .modal-breakdown td {
+      padding: 9px 10px; border-bottom: 1px solid var(--border);
+      color: var(--text-sub); font-weight: 500; text-align: right;
+    }
+    .modal-breakdown td:first-child { text-align: left; padding-left: 0; font-weight: 700; color: var(--text); }
+    .modal-breakdown tr:last-child td { border-bottom: none; }
+    .modal-total-row td {
+      font-weight: 800 !important; color: var(--text) !important;
+      border-top: 2px solid var(--border-hi) !important;
+      border-bottom: none !important;
+    }
+    .modal-note { font-size: 11px; color: var(--text-dim); margin-top: 20px; line-height: 1.5; }
+
+    /* Rate editor */
+    .modal-rate-editor { margin-bottom: 24px; }
+    .modal-rate-warning {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 14px;
+      font-size: 12px; font-weight: 500; color: var(--text-sub); line-height: 1.5;
+    }
+    .modal-rate-warning svg { flex-shrink: 0; margin-top: 1px; color: var(--accent); }
+    .modal-rate-fields {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .modal-rate-field { display: flex; align-items: center; gap: 8px; }
+    .modal-rate-field label {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-muted); white-space: nowrap;
+    }
+    .rate-input-wrap {
+      display: flex; align-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border-hi);
+      border-radius: 8px; overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .rate-input-wrap:focus-within { border-color: var(--accent); }
+    .rate-input-wrap input {
+      width: 68px; border: none; background: transparent;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 14px; font-weight: 700;
+      padding: 7px 6px 7px 10px; outline: none; text-align: right;
+    }
+    .rate-input-wrap span {
+      font-size: 12px; font-weight: 600; color: var(--text-muted); padding-right: 10px;
+    }
+    .modal-rate-hint {
+      font-size: 11px; font-weight: 500; color: var(--text-dim); margin-left: auto;
+    }
+    .modal-rate-hint a { color: var(--accent); text-decoration: none; }
+    .modal-rate-hint a:hover { text-decoration: underline; }
+
+    /* Make plan rows clickable */
+    .plan-cell { cursor: pointer; }
+    .plan-cell .plan-company { transition: color 0.15s; }
+    .plan-cell:hover .plan-company { color: var(--accent); }
+    tr:has(.plan-cell:hover) { background: var(--accent-glow); }
+
+    /* ── Plans table ──────────────────────────────────────── */
+    .plans-table thead th:first-child,
+    .plans-table td:first-child { text-align: left; }
+    .plans-table td { vertical-align: middle; }
+
+    .plan-company {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .plan-name { font-size: 14px; font-weight: 700; color: var(--text); }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .badge-tou     { background: var(--cyan-dim); color: var(--cyan); }
+    .badge-night   { background: rgba(2,132,199,0.12); color: var(--cyan); }
+    .badge-green   { background: var(--accent-dim); color: var(--accent); }
+    .badge-new     { background: rgba(217,119,6,0.08); color: var(--accent); }
+    .badge-prepaid { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+
+    [data-theme="dark"] .badge-tou   { background: rgba(56,189,248,0.1); color: var(--cyan); }
+    [data-theme="dark"] .badge-night { background: rgba(56,189,248,0.12); color: var(--cyan); }
+    [data-theme="dark"] .badge-green { background: rgba(245,158,11,0.1); color: var(--accent); }
+    [data-theme="dark"] .badge-new   { background: rgba(245,158,11,0.08); color: var(--accent); }
+
+    .plan-link {
+      display: inline-block;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 14px;
+      text-decoration: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .plan-link:hover { color: var(--text); border-color: var(--border-hi); }
+
+    /* ── AI recommendation ────────────────────────────────── */
+    .ai-rec {
+      border: 1.5px solid var(--accent);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .ai-rec-header {
+      background: var(--accent-dim);
+      border-bottom: 1px solid rgba(217,119,6,0.15);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    [data-theme="dark"] .ai-rec-header {
+      border-bottom-color: rgba(245,158,11,0.15);
+    }
+
+    .ai-rec-label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .ai-rec-model {
+      font-size: 12px; font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .ai-rec-body { padding: 32px 36px 36px; }
+
+    .ai-rec-company {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .ai-rec-plan-name {
+      font-size: 36px; font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .ai-rec-cost {
+      display: inline-block;
+      font-size: 64px; font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+    .ai-rec-cost span {
+      font-size: 18px; font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    .ai-rec-reasoning {
+      font-size: 15px; font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 22px;
+      border-left: 3px solid var(--accent);
+      padding-left: 20px;
+    }
+
+    .ai-rec-factor-title {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .ai-rec-factor {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-muted);
+      padding: 5px 0 5px 22px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .ai-rec-factor::before {
+      content: '→';
+      position: absolute; left: 0;
+      color: var(--accent); font-weight: 700;
+    }
+
+    .ai-rec-divider { height: 1px; background: var(--border); margin: 22px 0; }
+
+    .ai-rec-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .ai-rec-section-title {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .ai-rec-secondary {
+      font-size: 14px; font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .ai-rec-warn {
+      background: rgba(217,119,6,0.06);
+      border: 1px solid rgba(217,119,6,0.15);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px; font-weight: 500;
+      color: var(--accent);
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    /* ── Disclosure ───────────────────────────────────────── */
+    .disclosure {
+      font-size: 12px; font-weight: 400;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .card-top, .card-body { padding-left: 28px; padding-right: 28px; }
+      .card-divider { margin-left: 28px; margin-right: 28px; }
+      .card-heading { font-size: 34px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stat-value { font-size: 40px; }
+      .ghost-num { font-size: 100px; top: 16px; right: 24px; }
+      .cta-block { flex-direction: column; align-items: flex-start; }
+      .ai-rec-cost { font-size: 48px; }
+      .ai-rec-plan-name { font-size: 26px; }
+      .ai-rec-row { grid-template-columns: 1fr; }
+      .meter-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .site-footer {
+      margin-top: 72px;
+      padding: 28px 0 36px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-powered {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .footer-powered svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    @media (max-width: 600px) {
+      .site-footer { flex-direction: column; align-items: flex-start; }
+      .footer-copy { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <header class="anim-1">
+    <div class="header-left">
+      <div class="logo-icon">
+        <!-- State of Texas silhouette (from Texas_flag_map.svg) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-3 -4 1162 1134" style="color:var(--accent)">
+          <path fill="currentColor" d="m 647.09375,553.5313 0,464.5625 0.1875,0 2.34375,2.3437 0.5625,2.9063 1.75,2.875 0.21875,4.5 2.71875,2.2188 -0.0937,3.25 0.84375,3.9687 1.96875,3.8125 0.9375,6.375 0.0625,2.5313 2.03125,0.875 2.21875,1.1875 1.21875,1.7187 0.8125,1.9688 -0.21875,1.9375 -0.375,1.625 -1,1.625 1.21875,1.625 1.5625,2.1875 2.40625,-0.5 2,-1.2188 2.5,2.0313 2.59375,-0.8125 1.71875,0.7187 -0.125,1.8125 1.84375,0.4688 1,-2.0313 1.125,2.1563 1.9375,1.5312 1.65625,-0.5312 2.3125,0.375 1.71875,-1.2813 1.8125,0.375 0.6875,1.9063 0.5625,1.8125 1.625,0.75 1.90625,-0.5313 0.96875,1.7188 -0.34375,2.0625 2.0625,0.625 1.6875,0.7812 -1.71875,0.9063 1.65625,0.6562 2,0.9688 0.125,1.625 1.9375,0.5937 1.96875,-1.7187 2.09375,-0.125 1.84375,-0.4688 1.78125,1.7188 0.71875,1.625 1.28125,-1.8438 0.8125,1.9063 1.8125,-0.1875 0.96875,1.9687 2.1875,0.7188 -0.21875,-1.8438 1.78125,-0.7187 1.84375,0.7187 -0.34375,1.9375 1.6875,1 2,2.0625 1.9375,1.625 1.96875,-0.2812 1.75,0.6562 0.25,1.625 1.28125,2.0625 2,1.4063 0.65625,-1.6563 2.1875,0.3438 -1.8125,1.5937 1.71875,1.125 1.59375,2.0625 3.15625,0.3125 1.8125,1.6563 1.78125,-1.875 1.125,1.8437 1.65625,-0.125 1.84375,-1 2.21875,0.625 1.71875,-0.1562 -0.4375,1.9062 1.65625,-0.4687 1.9375,0.5312 0.5625,-2.1875 1.8125,0.5938 1.625,-0.2813 1.625,0.094 2.125,-0.4062 1.75,-0.1563 1.75,0.75 2.15625,-1.0625 2.21875,-0.375 1.0625,1.9063 2.09375,-0.4063 1.625,-0.25 1.625,0.9063 0.5625,1.6562 1.625,-1.0625 0.40625,1.875 2.15625,-0.625 2.6875,-0.4062 1.65625,0.9687 2.0625,-1.1875 -0.5,1.9688 2.40625,-0.5313 -0.53125,1.7813 1.75,0.1875 -0.65625,1.6562 1.6875,1.25 1.875,1.7813 1.71875,0.8125 -0.75,1.6875 2.90625,0.1562 1.75,1.75 0.25,1.8125 0.46875,1.7188 2.09375,-1.3438 0.46875,1.9375 1.65625,0.4375 1.625,-0.7812 0.96875,1.75 0.75,1.875 2.46875,-0.5313 1.28125,1.8438 1.78125,-0.2813 -0.21875,-1.75 1.46875,-1.6875 -0.625,-1.9375 -0.78125,-1.6562 1.71875,-1.375 1.9375,-0.6875 1.625,-0.5938 1.65625,-0.1875 1.71875,-0.2187 0,-1.75 2.78125,0.2812 1.75,-1.0312 1.75,0.094 1.625,-0.031 1.75,-0.1875 1.75,0.5 0.0625,-1.625 4.875,-0.3125 -0.25,-7.3125 0.4062,-2.4375 -0.4375,-2.3437 -1.21875,-1.7188 -0.21875,-4.3125 -0.59375,-5.5625 -0.6875,-5.3125 -2.75,-13.4062 -2.46875,-10.625 -2.59375,-10.6563 -0.9375,-2.2187 -2.375,-6.7813 -2.75,-10.75 -1.5625,-7.5 -1.1875,-8.3125 -0.59375,-7.5313 -0.21875,-2.7187 0,-4.3125 0.3125,-6.21875 0.53125,-6.3125 0.375,-2.8125 1.125,-5.71875 0.71875,-2.875 2.78125,-10.34375 0.59375,-1.78125 4.4375,-11.40625 3.0625,-7.1875 3.5,-7.625 6.625,-11.59375 3.625,-3.875 2.15625,-1.78125 2.1875,-7.5625 1.84375,-2.75 2.625,-3.46875 2.96875,-3.78125 2.71875,-3.21875 8.625,-8.375 9.3125,-8 3.90625,-2.90625 5.75,-4.03125 9.28125,-5.03125 2.65625,-1.15625 1.78125,-1.1875 2.6875,-3.71875 0.59375,-1.9375 1.53125,-1.96875 2.34375,-0.5625 2.375,-2.09375 0.78125,-2.09375 2,-1.4375 4.6875,-3.21875 9.375,-5.0625 6.65625,-3.40625 11.03125,-5.34375 8.5625,-4.5 2.4375,-1.375 19.0625,-11.8125 3.53125,-1.59375 6.5,-4.28125 1.65625,-0.0312 2.0625,-0.4375 2.15625,-0.8125 2.75,-1.75 1.0625,-1.75 1.68745,-2.1875 3.3438,-2.21875 2.25,-1.875 1.8437,-1.71875 2.25,-2.34375 4.8438,-5.71875 1.7187,-1.25 1.5313,-3.5 0.2187,-2.15625 7.5938,-3.8125 3.2188,-2.1875 4.5625,-3.625 6.3437,-4.125 5.9375,-3.5 2.7813,-2.96875 2.4375,-2.40625 1.8437,0.5625 2.3125,-0.40625 2.0938,-2.03125 1.5937,-3.6875 -0.375,-2.4375 -1.9062,-2.59375 2.2187,-1.5625 11.0625,-5.78125 7.0625,-3.3125 4.3125,-1.75 21.5938,-10.09375 8.0625,-3.09375 11.25,0 2.7187,0.375 1.5,1.71875 1.9063,0.875 1.9375,0.0312 -1.25,-6.65625 -0.7813,-3.21875 -3.2187,-5.03125 -1.7188,-1.8125 -0.4375,-1.78125 -2.4687,-1.90625 -0.125,-2.09375 1.25,-1.875 2.4375,-1.9375 2.7187,-1.96875 2.1875,-3.1875 1.1563,-2.53125 0.3125,-1.78125 0.9062,-2.875 1.3125,-2.78125 1.875,-1.5625 2.3125,-1.90625 0.3125,-1.65625 3.0313,-3.0625 -1.8438,-1.71875 0.75,-1.90625 1.2813,-2.375 0.6875,-2 -0.875,-2.03125 -0.6563,-1.96875 -0.375,-1.875 -0.5312,-1.90625 0.8125,-1.6875 0.2187,-1.75 0.094,-1.75 0.2813,-1.71875 -1.25,-1.625 -1.9375,-1.15625 -1.3438,-1.96875 -0.2812,-1.75 0.75,-1.84375 -0.375,-2 0.8437,-1.875 1.5,-1.78125 0.2188,-1.8125 1.9375,-0.40625 0.1875,-1.625 -0.9375,-2.125 0.2187,-1.71875 -0.1562,-1.84375 -0.5938,-1.8125 -1.7187,-1.75 0.5937,-1.625 0.3125,-2.25 2.125,-1.53125 1.6563,-0.375 0.1562,-1.71875 -0.1562,-1.78125 0.1875,-1.6875 1.0937,-1.78125 1.6563,-1.25 1.7812,-0.84375 0.9688,-1.71875 0.3437,-1.9375 0.6563,-1.875 0.062,-1.71875 0.6875,-1.65625 1.5312,-1.75 0.75,-2.40625 0.9375,-1.6875 0.9063,-1.875 -0.3125,-1.78125 -0.625,-1.75 -0.75,-2 1.6562,-1.625 0.9375,-1.8125 1.5313,-1.84375 -0.4063,-1.8125 -1.6875,-1.3125 -1.7187,-0.96875 -0.3438,-1.65625 0.1563,-1.875 1.9375,-0.0625 2.4062,-1.03125 0.1875,-2.3125 -0.094,-1.625 -1.0312,-1.8125 -1.7188,-0.46875 -1,-1.65625 1.5625,-1.75 0.7188,-1.625 -0.7188,-1.78125 0.6875,-2.125 0.1563,-0.4375 -4.4063,0 -0.25,0.1875 -0.125,-0.1875 -1.5312,-1.59375 0.4062,-2.96875 0.625,-1.96875 -1.75,-0.78125 0.031,-1.9375 -0.1874,-0.71875 -500.31255,0 z"/>
+          <path fill="currentColor" d="m 398.25,1e-4 -81.03125,0.0312 0.0937,52.875 -0.125,18.46875 0.0937,3.53125 -0.1875,70.4375 0.0625,11.71875 -0.125,74.25 0.0625,30.75 -1.875,107.8125 0.0312,105.625 -192.59375,0.0312 -77.0625,-0.25 -43.5311,0.81255 -1.65625,1.90625 1.6875,1.28125 0.34375,1.65625 -0.78125,1.8125 1.09375,1.25 -1.9375,1.09375 -0.8125,1.78125 0.71875,1.9375 0.78125,1.9375 2.125,1.75 1.21875,1.84375 2.21875,1.15625 2.375,1.34375 0.65625,1.78125 1.625,2.15625 1.8125,1.34375 1.90625,-1.125 2.5625,0.25 2.03125,0.625 3.3125,2.375 0.5,1.65625 2,1.6875 1.34375,3.5 2.71875,4.375 0.59375,1.96875 0.71875,1.71875 0.6875,2.65625 3,2.15625 1.9375,4.3125 0.53125,2.25 1.625,1.8125 2.15625,0.78125 1.65625,1.875 2.1875,1.28125 2.0625,0.3125 2.9375,2.59375 6.21875,0.5625 4.5,2.90625 0.53125,2.6875 1.40625,2.8125 2.5,0.625 1.09375,1.78125 1.90625,0.125 1.65625,2.53125 1.25,1.8125 1.5625,1.875 2.125,2.9375 1.28125,2.0625 1.46875,1.96875 1.875,-0.0625 2.78125,2.9375 5.625,2.5 1.71875,1.5625 2.53125,2.53125 1.15625,1.84375 0.5,2.25 0.9375,2.21875 0.46875,1.84375 1.8125,1.34375 2,1.21875 1.59375,0.5625 1.375,2.65625 1.90625,1.75 1.78125,1.34375 1.65625,1.375 2.25,1.15625 0.46875,1.90625 -0.59375,1.75 1.9375,0.4375 1.75,0.5 2,1.3125 1.6875,0.59375 0.8125,1.75 1.71875,-1.3125 1.1875,1.75 1.65625,1.34375 1.96875,-0.875 1.71875,-0.34375 0.75,2.0625 1.8125,0.1875 0.84375,1.75 1.65625,0.125 0.5,1.625 1.96875,0.125 1.65625,0.71875 0.65625,1.8125 1.40625,1.75 1.6875,0.65625 0.71875,1.71875 1.6875,-0.15625 1.75,0.78125 1.6875,0.0625 1.375,2.40625 0.21875,1.625 0.3125,2.1875 1.8125,1.1875 1.71875,0.84375 1.625,0.4375 1.21875,1.71875 1.0625,2.125 0.71875,1.625 0.625,1.90625 0.75,1.875 0.46875,1.75 -0.21875,1.65625 -0.0312,2.0625 0.8125,2.0625 0.3125,1.625 -0.0312,1.625 0.3125,2.5 2.03125,1.3125 1.6875,0.65625 -1,1.71875 1.3125,1.8125 1.6875,1.21875 0.8125,1.6875 1.59375,0.5625 0.28125,2.03125 0.65625,2 2.34375,0.96875 1.59375,1.9375 0.3125,2.3125 0.5625,1.84375 0.71875,2.03125 0.0312,1.75 -0.1875,1.96875 -0.53125,1.625 0.34375,1.78125 0.40625,2.25 -0.34375,1.8125 -1.09375,1.625 0.25,2.03125 0.65625,1.75 0.25,1.65625 0.40625,1.71875 0.0312,1.75 1.09375,1.65625 -0.71875,1.8125 0.125,1.75 1.84375,2.125 1.09375,1.875 1.4375,2 1.4375,1.9375 -0.5,1.6875 1.625,1.46875 0.90625,1.9375 1.40625,1.71875 0.75,1.75 0.5625,1.90625 0.9375,1.75 0.34375,1.78125 0.125,1.84375 0,1.65625 1.625,1.34375 0.78125,1.625 0.84375,1.625 1.71875,0.65625 1.6875,1.25 1.4375,1.65625 5.125,4.625 1.09375,1.71875 1.6875,0.78125 2.78125,1.40625 1.6875,-0.0625 1.71875,0.40625 2.78125,1.34375 2.0625,0.96875 0.5625,2 1.90625,-0.21875 -0.28125,1.65625 0.1875,1.71875 2.5625,2.34375 0.65625,1.71875 1.5,1.71875 1.65625,1.1875 1.78125,1.28125 1.75,0.9375 1.9375,1.75 1.6875,1.25 1.6875,1.4375 1.875,0.8125 2.15625,0.875 2.375,0.5625 1.84375,0.34375 2.1875,1.09375 1.71875,-0.28125 1.6875,0.25 2.28125,0.375 1.65625,0.9375 1.9375,-0.125 1.25,1.625 1.84375,0.6875 -0.1875,1.6875 0.3125,1.65625 1.9375,-0.5 1.09375,1.6875 1.21875,1.71875 1.875,0.96875 1.65625,0.53125 1.71875,0.53125 1.5,1.65625 1.625,-0.0625 1.90625,-0.71875 1.75,1.625 2.34375,-0.4375 1.84375,0.96875 1.75,0.84375 1.0625,1.65625 1.78125,1.75 2,2.0625 -0.125,1.96875 1.8125,-0.25 1.5,1.78125 1.59375,1.5 1.8125,0.5625 1.78125,0.9375 1.875,0.0937 0.5,-1.84375 1.8125,0.8125 0.0625,1.71875 1.75,-0.6875 -0.1875,2.0625 1.90625,0.21875 0.6875,2.5625 1.0625,-2.03125 2.75,1.21875 1.875,-0.3125 2.03125,0.375 2.4375,1.25 1.71875,-0.5625 2.4375,-0.71875 -0.0312,-1.6875 1.6875,-2.75 -0.625,-1.90625 1.71875,-1.65625 0.75,-1.6875 1.125,-1.625 2.21875,-0.59375 0.3125,-1.8125 1.84375,-1.71875 0.59375,-1.90625 1.0625,-1.625 1.3125,-2.3125 2.09375,0.71875 1.65625,-0.96875 1.71875,-1.15625 1.71875,-1.09375 1.8125,-0.4375 0.90625,-1.78125 -1.6875,-1.625 -1.65625,-1.5 0.3125,-1.6875 1.3125,-1.8437 -0.4375,-1.625 0.71875,-1.8125 1.0625,-2.78125 2.40625,-1.3125 1.09375,-2.46875 1.71875,-1.5 -1.1875,-1.625 -0.34375,-1.75 0.625,-1.90625 0.65625,-1.9375 1.375,-1.65625 -0.59375,-1.84375 0.90625,-2.71875 1.65625,-1.5 0.0625,-1.84375 1.375,-1.96875 -0.28125,-1.90625 1.65625,0.53125 0.6875,-1.6875 -0.28125,-2.59375 1.6875,-1.90625 1.25,-1.65625 0.78125,-2.03125 0.84375,-2.21875 0.71875,-2.21875 1.90625,-0.78125 2.71875,0.0312 1.71875,-1.31245 1.8125,-0.15625 2.34375,-1.9375 0.71875,2 1.78125,-0.65625 1.84375,-1.125 -0.375,-1.90625 1.75,0.21875 2.46875,0.0625 1.96875,0.34375 1.90625,0.46875 1.875,0.84375 1.71875,-0.6875 0.6875,-1.9375 0.34375,-1.875 0.96875,-2.9375 1.0625,-2.28125 1.625,-0.59375 1.71875,-1.53125 2.5625,1.375 1.625,-0.34375 1.625,0.34375 1.28125,1.6875 2.21875,0.53125 2.125,-0.28125 0.21875,2.0625 2.15625,1.5 1.75,1.125 1.75,0.96875 1.84375,0.125 1.90625,0.5 2.0625,0.125 1.875,-1.75 1.96875,0.0312 1.65625,0.5 1.8125,-1.6875 1.125,1.78125 1.625,-0.375 0.5625,1.78125 1.5625,-1.625 3.15625,0.4375 1.75,-1.40625 1.59375,1.46875 1.65625,0.1875 -0.59375,-1.65625 1.6875,0.84375 0.625,2.09375 2.25,-1 2.1875,1.1875 1.8125,0.53125 1.71875,1.15625 2.40625,0.0937 1.75,-1.0625 1.5,1.75 1.5625,-1.75 2.0625,-0.375 2.75,0.0937 0.40625,-2.6561 2.28125,-1.28125 0.34375,2.40625 0.65625,3 2.40625,-0.53125 2.125,-2.0625 2.03125,-0.40625 0.0625,1.6875 1.5,2.21875 3.46875,-1.1875 -1.46875,1.65625 1.625,1.3125 0,2.125 2.21875,2.1875 0.40625,2.375 1.875,0.90625 3.8125,1.25 0.125,1.65625 -1.0625,3.4375 0.125,1.71875 1.84375,1.53125 1.15625,-2.03125 0.0312,-1.6875 0.75,-2.46875 1.625,0.625 -0.15625,2.09375 0.15625,5.03125 -0.9375,2.09375 0.5625,1.75 2.40625,-0.21875 3.0625,0.21875 1.84375,1.71875 1.75,2.84375 1.9375,-0.125 2.3125,0.8125 2.34375,0.6875 1.78125,1.75 1.1875,1.875 0.40625,2 1.71875,2.09375 0.4375,1.78125 1.65625,1.125 2.09375,1.28125 2,0.4375 1.8125,2.15625 2.09375,1.5625 2,1.375 1.53125,2.4375 2.25,1.34375 2,1 1.65625,0.75 1.0625,1.96875 0.96875,1.84375 0.65625,1.625 -0.78125,2.3125 1.4375,1.71875 1.90625,1.90625 2.46875,2.03125 2.28125,1 1.1875,1.9375 0.5625,1.875 0.0937,2.78125 0.25,1.75 0.5625,1.6875 0.40625,2.03125 0.0625,2 0.0312,1.75 -0.28125,1.8125 1.09375,1.6875 0.21875,1.6875 1.96875,1.03125 1.90625,1.3125 0.15625,1.78125 1.5625,2.5625 0.21875,2.34375 2.125,1.0625 1.15625,1.78125 -0.28125,2.28125 0.28125,1.9375 1.65625,0.96875 0.6875,1.90625 0,1.625 -0.3125,2.75 1.25,3.40625 0.0625,0.0312 1.84375,1.15625 2.53125,1.0625 -0.25,2.125 1.625,2.1875 2.875,2.1875 -1.21875,2.625 0.96875,2.09375 1.0625,1.71875 2.28125,0.65625 2.09375,0.71875 -0.5,1.625 -2.0625,1.1875 1.46875,1.6875 1.15625,1.71875 0.0625,1.65625 -1.0936,2.5938 0.6875,1.875 2.15625,2.90625 1.1875,2.4375 1.34375,1.84375 0.0937,1.65625 0.375,3.21875 1.375,2.15625 1.875,1.71875 2.53125,0.75 0.3125,2.25 0.53125,1.625 1.96875,0.46875 2.21875,1.875 1.6875,0 1.90625,1.3125 3.125,1.15625 1.09375,2.53125 1.4375,2.0625 0.8125,2.34375 2.15625,1.0625 0.5,1.65625 0.28125,1.71875 0.59375,1.96875 0.84375,1.78125 1.6875,1.28125 2.40625,0.65625 1.5625,1.65625 -0.59375,1.9375 1.15625,2.3125 2.28125,1.59375 0.53125,2.03125 -0.90625,1.875 0.9375,2.03125 1.5625,1.90625 0.1875,2.65625 0.34375,1.9375 2.21875,1.65625 1.03125,1.6875 1.75,-1.15625 0.65625,1.59375 0.8125,2.4375 2.28125,0.375 1.125,2.125 2.21875,2.8125 0.96875,2.03125 1.96875,1.125 1.78125,-0.375 1.84375,1.1875 -0.0625,1.78125 1.75,0.4375 2.03125,-1.15625 1.9375,-0.0937 1.4375,2.125 -0.0937,1.71875 2.09375,-1.28125 1.65625,2.40625 1.71875,2.03125 -0.1875,2.03125 -0.3125,1.9375 -0.28125,1.71875 -0.0625,2.3125 2.09375,-0.375 1.84375,1.25 -0.375,2.625 -0.875,2.625 0.71875,2.875 -0.46875,2.0625 -0.5625,2 -0.75,2 -0.125,2.15625 -1.96875,1.0625 0.90625,2.09375 1.78125,-0.21875 1.1875,1.71875 0.5625,3.15625 2.53125,-0.4375 0.96875,2.875 -0.125,1.90625 0.875,1.78125 0.5625,2.71875 -1,2.3125 0.5625,1.75 -0.15625,1.9375 0.25,2.59375 -0.375,1.71875 -1.40625,2.5625 0.59375,2.2188 0.4375,1.9687 2.0625,-0.2812 1.03125,2.0937 2.40625,2.0938 -1.53125,1.7812 0.5,1.75 2.375,1.625 2.09375,0.6563 1.375,1.6875 0.4375,4.3125 1.71875,0.062 0,-797.68755 -1.96875,0.625 -1.8125,-2.25 -1.65625,-2.71875 -1.9375,-0.125 -1.0625,2.65625 0.3125,1.9375 -0.53125,1.65625 -1.625,2.125 -2.125,0.6875 -1.71875,-0.9375 -1.40625,-1.625 -2.25,-1.4375 -1.75,-0.5625 -1.96875,0.125 -1.84375,-0.4375 -1.9375,1.03125 -0.0312,1.71875 -1.34375,1.75 -2.125,0.125 -2.125,-0.9375 -2.03125,0.5 -2.09375,-0.0625 -1.75,-1.71875 -1.0625,-1.6875 -2.40625,-1.125 -1.625,-2.125 -1.84375,-1.34375 -1.9375,-2.8125 -1.53125,-2.0625 -1.78125,-1.21875 -1.375,-1.6875 -1.4063,-2.0313 -1.65625,-1.21875 -2.71875,-1.9375 -1.71875,-0.1875 -1.5625,1.71875 -2.53125,0.1875 0,-204.6875 -43.59375,0 0,-0.25 -42.4375,0 -10.75,0.0937 L 398.25,0 z"/>
+          <path fill="currentColor" d="m 647.34375,220.3438 -0.25,0.0625 0,333.125 500.31255,0 -0.2188,-0.96875 -3.375,-1.125 -0.9062,-1.71875 -1.3125,-1.75 0.5937,-1.6875 0.7813,-2.375 1.7812,-1.875 -1.8437,-0.0625 -1.1563,-2.84375 -2,-2.1875 1.0313,-2.21875 -2.5313,-1.4375 -2.4375,-1.59375 0.375,-1.78125 1.875,-1.15625 0.8125,-1.875 -2.2812,-0.40625 -1.7188,-0.625 -2.4375,-0.34375 -1.0312,-1.65625 -1.6875,-1.25 0.031,-1.71875 -1.5313,-2.15625 -0.1875,-1.625 1.8125,-1.59375 0.094,-1.84375 -0.4375,-1.8125 0.75,-1.625 0.8125,-1.6875 -0.7812,-2.90625 -1.0938,-2 -1.0625,-1.6875 1,-1.78125 -0.9062,-1.90625 -1.5625,-1.84375 -1.5313,-1.78125 -0.1562,-1.78125 -0.8438,-1.6875 0.062,-1.71875 -1.7812,-0.625 -0.9375,-1.90625 -1.75,-0.125 -0.4688,-1.65625 -1.625,-0.8125 -1.875,-1 -1.625,-2.90625 -0.9687,-2.0625 -1.4375,-1.78125 -1.7188,-0.9375 -0.031,-2.6875 -1.2187,-162.3125 -1.1875,-2.15625 -1.6563,0.625 -2.0937,0.875 -1.625,1.5 -0.5,-1.90625 -1.75,-0.53125 -1.7188,-1.59375 -1.7812,1.03125 -1.75,0.5 1.9687,0.3125 0.1563,1.78125 -1.875,-0.6875 -1.625,1.1875 -1.6563,-0.5625 0.5625,-1.71875 0.375,-1.6875 -1.7812,0.90625 -1.0313,2.0625 -1.6562,0.15625 0.8437,-1.9375 -1.75,0.5625 -0.9687,2.34375 -1.8438,-0.5 -1.7187,-0.53125 -0.7813,1.6875 -1.7812,0.0625 -1.75,-1.625 0.7187,-1.625 -1.75,0.5625 -1.4687,-2.28125 -1.8438,-0.75 -1.625,-0.96875 0.7813,-1.8125 1.0312,-1.9375 -1.7187,0.5625 -2.0625,1.3125 -1.75,0.1875 -2.0313,0.21875 1.4063,-1.71875 -1.6875,-0.0937 -2.6875,0.125 0.7187,-2.09375 -2.375,0.71875 2.2813,-1.9375 -1.7188,0.21875 -1.0937,-1.875 0.094,1.8125 -1.75,-0.3125 -1.6875,-0.375 -1.5938,1.15625 -1.75,-0.96875 2.0938,-0.1875 0.625,-2.40625 -1.8438,0.4375 -2.25,0.8125 -2.9687,-0.4375 1.0937,-1.875 -2.4375,-0.53125 1.5625,1.75 -1.75,0.34375 -1.5937,-1.8125 0.5312,-1.75 -1.8437,-0.1875 -1.75,-0.90625 0.4375,-0.84375 -2.5,0.875 -0.031,-1.65625 -1.625,-0.75 0.25,1.8125 -1.875,0.15625 -2.25,-1.03125 0.7812,-1.75 -1.75,0.0625 -1.625,-0.84375 -1.5312,-1.8125 0.625,-1.90625 -1.0625,-2.03125 0.2812,2 -2.1562,0.0312 0.3437,-2.3125 -1.8125,-0.71875 -0.7187,-2.625 -1.75,1 -2.0313,-0.5625 -2.9375,-0.65625 -0.5,-1.875 -0.4687,-2.125 -1.6563,-0.34375 -0.3125,2.65625 -1.5937,-1.65625 0.9375,-1.9375 -1.8125,0.90625 -1.875,-1.125 0.9062,-1.625 -1.5937,-0.34375 -2.8438,-1.28125 -3,-1.25 -2.4062,0.9375 -1.5625,1.625 0.1875,2.90625 -1.1875,2 -1.7188,-2.1875 0.3125,1.9375 -1.4375,1.84375 -1.75,-0.9375 -2.0625,0.75 -2.1875,0.8125 -1.875,-0.1875 -1.875,0.4375 -2,-0.625 -2.28125,-0.0312 -1,-1.6875 -1.625,1.0625 -2,-0.125 -0.2812,-2.0938 -2.03125,1.71875 -1.65625,-0.875 0.1875,-2.3125 -0.75,-1.96875 -1.71875,-0.28125 -1.78125,-1 -1.6875,1.5625 -1.4375,2.40625 -1.96875,-0.53125 -2.125,1.625 -1.875,0.90625 -1.71875,-0.53125 -2.21875,-0.625 -1.5,1.65625 0.71875,1.6875 -0.34375,1.65625 -2.15625,-0.15625 -1.71875,-1.125 -1.6875,0.90625 -0.8125,1.9375 -1.625,-0.75 -1.625,-1 -2.46875,-1.71875 -3.25,-1.71875 -1.40625,2.625 -2.3125,0.375 -1.8125,-0.6875 -1.40625,1.875 -1.71875,-1.1875 -1.625,2 -2.09375,-0.6875 -2.53125,-0.28125 0.1875,1.59375 -2.5,-1 -1.90625,0.3125 -0.875,1.9375 -1.75,0.90625 1.6875,-0.15625 -0.25,2.65625 -1.375,2.75 -1.71875,0.84375 -2.75,0.46875 -2.28125,-1.4375 -2.0625,-0.9375 -1.6875,0.96875 -0.75,1.84375 -0.0312,2.1875 -0.5,1.78125 -1.8125,1.40625 -2.03125,0.59375 -0.90625,-1.90625 -0.8125,-1.625 -1.75,-1.84375 -1.59375,-2.0625 -1.65625,-2.25 -1.625,-0.15625 -1.65625,0.5 -2.78125,0.3125 -1.375,-1.625 -0.125,-1.96875 -1.25,-1.8125 -1.65625,0.5 -1.9375,0.0312 -1.75,-1.25 -3.1875,-2.28125 2.78125,-2.40625 0.40625,-2.15625 -3.125,0.125 -3.96875,-1.875 -0.90625,2.96875 -0.0937,2.25 -1.75,2.9375 -1.8125,0.5 -1.84385,0.46875 -2.15625,-0.40625 -0.59375,-1.96875 -1.5,-2.1875 -1.625,-0.375 -2.375,0.4375 -0.15625,1.625 -1.65625,0.34375 -2,-1.9375 -1.125,-3 -0.0625,-1.78125 -0.40625,-2.6875 -2.03125,-2.15625 -2.4375,1.53125 -1.84375,0.9375 -1.9375,-1.34375 -0.0312,1.75 0.90625,2.875 0,1.71875 -1.09375,1.84375 -2.125,2.59375 -2.1875,0.75 -1.8125,-2.21875 -1.8125,2 3.125,0.90625 0.3125,1.625 -3.90625,1.40625 -0.15625,1.71875 0.84375,2.78125 -0.21875,2.15625 -1.75,2.125 -2.34375,0.3125 -1.8125,-0.625 -1.6563,-1.5625 -0.625,-1.65625 -0.65625,-1.625 -0.625,-1.625 -0.9375,-1.71875 0.84375,-3.09375 2.5625,-1 -0.28125,-2.03125 -0.5625,-2.0625 -0.90625,-2.375 -1.71875,-1.34375 -1.8125,-0.0312 -1.625,1.1875 -0.34375,2.40625 -1.5625,2.1875 -1.84375,-1.09375 -2.0625,-1.78125 -0.28125,2.3125 -1.75,0.25 -0.15625,-1.71875 -0.3125,1.9375 -1.6875,3.25 -2.4375,1.09375 -1.78125,0.0937 -1.78125,0 -2.3125,-1.03125 -0.75,-2.21875 0.875,-2.28125 0.0625,-1.65625 -1.125,-1.9375 -3.21875,-1.53125 -3,1.46875 -2.875,0.4375 -1.96875,-0.25 -0.6875,-1.71875 0.1875,-1.8125 0.46875,-1.71875 -1.71875,-1.53125 -2.1875,-1.40625 -3.28125,-1.0625 -1.9375,0.8125 -0.96875,2.15625 -1.5,2 -1.78125,0.75 -1.875,0.6875 -0.4375,1.84375 -1.625,0 0.46875,2 -1.84375,0.96875 -1.6875,1.71875 -2.03125,1.28125 -1.78125,0.75 -2.15625,-0.71875 -1.875,-1.125 -2.125,-1.15625 -2.03125,-0.0625 -1.8125,-1.15625 0.0625,-2.40625 1.75,-0.21875 0.15625,-2.5 -1.65625,-0.5 1.53125,-1.65625 0.34375,-3.34375 -1.65625,-1.59375 -1.6875,0.6875 -3.25,0.59375 -2.4375,-0.28125 -2.40625,-0.6875 -0.59375,-1.78125 -1.46875,-1.65625 1.65625,-0.96875 -2.40625,-1.9375 -0.5625,-2 1.46875,-1.78125 1.0625,-1.96875 -0.96875,-1.9375 -0.53125,-2 -2.4375,1 -2.96875,3.21875 -3.40625,-0.71875 -2.03125,-1.4375 -2.125,0.53125 -2.09375,-0.125 -1.75,-0.40625 -2.21875,-1.75 -3.75,-0.5 -1.65625,1.8125 -1,1.84375 -1.03125,3.03125 -1.65625,0.75 -1.8125,1.28125 -1.96875,0.8125 -2.03125,-0.46875 -1.96875,-1.6875 -1.71875,-2.25 -2.09375,-2.71875 -2.09375,-1.9375 -2.875,-0.53125 -3.4375,-0.1875 -2.5,2.0625 -1.6875,0.3125 -1.8125,0.0625 -2,1.03125 -1.6875,-1.15625 -2.6875,-0.6875 -1.6875,-1.625 -1.9375,0.1875 -2.71875,0.71875 -1.6875,-1.96875 -1.9375,-0.96875 -1.65625,-1.59375 -3.40625,-0.90625 -1.25,-1.6875 -1.875,0.8125 -1.96875,0.5625 -1.75,0.625 -1.65625,-0.90625 -2.28125,-0.1875 -1.6875,0.53125 -1.625,0.0312 -0.34375,-1.71875 -2.03125,1.28125 -3.1875,-0.75 0,-1.625 -0.5625,-2.0625 -0.0312,-1.78125 -0.9375,-1.84375 -0.21875,-1.625 0.34375,-2.125 -0.0937,-2.03125 -1.78125,0.0625 -0.625,-1.65625 -1.8125,-2 -1.71875,-1.28125 0.1875,-1.71875 -1.96885,-1.53125 z m 397.37505,70.96875 0.3125,-0.0937 0.625,-1.625 -0.9375,1.71875 z"/>
+        </svg>
+      </div>
+      <div class="logo">Energy Plan Optimizer</div>
+    </div>
+    <div class="header-auth" id="headerAuth"></div>
+    <button class="theme-toggle" id="themeToggle">
+      <span id="themeIcon">🌙</span>
+      <span id="themeLabel">Dark</span>
+    </button>
+  </header>
+
+  <!-- Step tracker -->
+  <div class="steps anim-2">
+    <div class="step-item active" id="si-1">
+      <div class="step-dot active" id="sd-1">1</div>
+      <div class="step-label">Upload Bill</div>
+    </div>
+    <div class="step-connector" id="sc-1"></div>
+    <div class="step-item" id="si-2">
+      <div class="step-dot" id="sd-2">2</div>
+      <div class="step-label">Usage Data</div>
+    </div>
+    <div class="step-connector" id="sc-2"></div>
+    <div class="step-item" id="si-3">
+      <div class="step-dot" id="sd-3">3</div>
+      <div class="step-label">Your Report</div>
+    </div>
+    <div class="step-connector" id="sc-3"></div>
+    <div class="step-item" id="si-4">
+      <div class="step-dot" id="sd-4">4</div>
+      <div class="step-label">Best Plans</div>
+    </div>
+  </div>
+
+  <!-- Card -->
+  <div class="card anim-3">
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-inner">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Processing…</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Upload Bill -->
+    <div id="panel-1" class="panel active">
+      <div class="card-top">
+        <div class="ghost-num">01</div>
+        <div class="step-badge">Step 01</div>
+        <h1 class="card-heading">Upload Your<br>Electricity Bill</h1>
+        <p class="card-sub">Drop your latest PDF bill and we'll automatically extract your ESI ID and meter number — everything you need for the next step.</p>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-body">
+        <!-- Resume card (shown when logged in with saved data) -->
+        <div id="resumeCard" class="resume-card" style="display:none;">
+          <div class="resume-icon">⚡</div>
+          <div class="resume-info">
+            <div class="resume-title">Saved session found</div>
+            <div class="resume-meta" id="resumeMeta">—</div>
+          </div>
+          <div class="resume-actions">
+            <button class="btn btn-sm" id="resumeBtn">Resume →</button>
+            <button class="btn btn-ghost btn-sm" id="dismissResumeBtn">Start Fresh</button>
+          </div>
+        </div>
+
+        <div class="drop-zone" id="billDropZone">
+          <input type="file" id="billFileInput" accept=".pdf" />
+          <span class="drop-icon">📄</span>
+          <div class="drop-primary">Drop your electricity bill here</div>
+          <div class="drop-secondary">or click to browse &nbsp;·&nbsp; PDF only</div>
+        </div>
+        <div id="billMsg" class="msg"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Green Button upload -->
+    <div id="panel-2" class="panel">
+      <div class="card-top">
+        <div class="ghost-num">02</div>
+        <div class="step-badge">Step 02</div>
+        <h1 class="card-heading">Download Your<br>Usage Data</h1>
+        <p class="card-sub">Log in to Smart Meter Texas with the details below, then export up to 13 months of interval data as a Green Button XML file.</p>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-body">
+        <div class="meter-grid">
+          <div class="meter-box">
+            <div class="meter-box-label">ESI ID</div>
+            <div class="meter-box-value" id="displayEsi">—</div>
+          </div>
+          <div class="meter-box">
+            <div class="meter-box-label">Meter Number</div>
+            <div class="meter-box-value" id="displayMeter">—</div>
+          </div>
+        </div>
+
+        <div class="instructions">
+          <ol>
+            <li>Go to <a href="https://www.smartmetertexas.com" target="_blank">smartmetertexas.com</a> and create an account using your <strong>ESI ID</strong> and <strong>meter number</strong> above</li>
+            <li>Navigate to <strong>My Account → Green Button → Download My Data</strong></li>
+            <li>Select a date range (up to 13 months) and choose <strong>XML</strong> format</li>
+            <li>Download the file, then drop it below</li>
+          </ol>
+        </div>
+
+        <div class="drop-zone" id="gbDropZone">
+          <input type="file" id="gbFileInput" accept=".xml,.zip" />
+          <span class="drop-icon">🟢</span>
+          <div class="drop-primary">Drop your Green Button XML file here</div>
+          <div class="drop-secondary">or click to browse &nbsp;·&nbsp; .xml or .zip</div>
+        </div>
+        <div id="gbMsg" class="msg"></div>
+
+        <div class="restart-row">
+          <button class="btn btn-ghost btn-sm" id="backToBillBtn">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Usage Report -->
+    <div id="panel-3" class="panel">
+      <div class="card-top">
+        <div class="ghost-num">03</div>
+        <div class="step-badge">Step 03</div>
+        <h1 class="card-heading">Your Usage<br>Report</h1>
+        <p class="card-sub">Here's exactly how much electricity you've consumed — and when. Day vs. night breakdown included.</p>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-body">
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" id="statTotal">—<span> kWh</span></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Monthly Avg</div>
+            <div class="stat-value" id="statAvg">—<span> kWh</span></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Daily Avg</div>
+            <div class="stat-value" id="statDaily">—<span> kWh</span></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Peak Month</div>
+            <div class="stat-value" id="statPeak" style="font-size:28px;letter-spacing:-0.02em;">—</div>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <div class="chart-label">Monthly Usage</div>
+          <div class="chart-wrap"><canvas id="usageChart"></canvas></div>
+        </div>
+
+        <div class="charts-duo">
+          <div class="chart-section">
+            <div class="chart-label">Avg Usage by Hour of Day</div>
+            <div class="chart-wrap chart-wrap--hourly"><canvas id="hourlyChart"></canvas></div>
+          </div>
+          <div class="chart-section">
+            <div class="chart-label">Day vs Night Split</div>
+            <div class="chart-wrap chart-wrap--pie">
+              <canvas id="dayNightPie"></canvas>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-swatch" style="background:#d97706;opacity:.85;"></div>
+                Day (6am–10pm)
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background:#0284c7;opacity:.75;"></div>
+                Night (10pm–6am)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Total kWh</th>
+                <th>Day</th>
+                <th>Night</th>
+                <th>Avg/Day</th>
+                <th>vs avg</th>
+              </tr>
+            </thead>
+            <tbody id="usageTableBody"></tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td id="footerTotal">—</td>
+                <td id="footerDay">—</td>
+                <td id="footerNight">—</td>
+                <td></td><td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="cta-block accent-border">
+          <div>
+            <div class="cta-title">Ready to find a better plan?</div>
+            <div class="cta-sub">Compare live rates from Power to Choose — ranked for your actual consumption and day/night split.</div>
+          </div>
+          <button class="btn" id="goPlansBtn">Find Best Plans →</button>
+        </div>
+
+        <div class="restart-row">
+          <button class="btn btn-ghost btn-sm" id="restartBtn">Start Over</button>
+          <button class="btn btn-ghost btn-sm" id="saveBtn" style="display:none;margin-left:auto;">Save Progress</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Best Plans -->
+    <div id="panel-4" class="panel">
+      <div class="card-top">
+        <div class="ghost-num">04</div>
+        <div class="step-badge">Step 04</div>
+        <h1 class="card-heading">Best Plans<br>for Your Usage</h1>
+        <p class="card-sub">Live rates from Power to Choose, ranked by estimated 12-month cost for your specific usage profile.</p>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-body">
+
+        <div class="context-strip" id="plansContext"><!-- filled by JS --></div>
+
+        <div class="night-callout" id="nightCallout" style="display:none;">
+          🌙 &nbsp;You use a high proportion of electricity at night. TOU plans with free or discounted nights may cost less than the estimates shown.
+        </div>
+
+        <div class="zip-row">
+          <div class="field">
+            <label for="zipInput">Your ZIP Code</label>
+            <input id="zipInput" type="text" inputmode="numeric" maxlength="5" placeholder="e.g. 77002" />
+          </div>
+          <button class="btn" id="findPlansBtn">Find Plans</button>
+        </div>
+
+        <div id="plansMsg" class="msg"></div>
+
+        <div id="filterRow" class="filter-row" style="display:none;">
+          <div class="filter-group">
+            <span class="filter-label">Rate Type</span>
+            <button class="filter-btn active" data-filter-type="all">All</button>
+            <button class="filter-btn" data-filter-type="Fixed">Fixed</button>
+            <button class="filter-btn" data-filter-type="Variable">Variable</button>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Term</span>
+            <select id="termSelect" class="filter-select">
+              <option value="all">Any</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Company</span>
+            <div class="company-filter-wrap">
+              <button class="filter-btn" id="companyFilterBtn">All Companies ▾</button>
+              <div class="company-panel" id="companyPanel">
+                <div class="company-panel-header">
+                  <span class="company-panel-title">Filter by Company</span>
+                  <button class="company-clear" id="companyClear">Clear all</button>
+                </div>
+                <input type="text" id="companySearch" class="company-search" placeholder="Search…" autocomplete="off" />
+                <div class="company-list" id="companyList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Show</span>
+            <button class="filter-btn" data-filter-renew="false" id="filterRenew">🌿 Renewable Only</button>
+            <button class="filter-btn" data-filter-tou="false" id="filterTou">🌙 TOU Only</button>
+          </div>
+          <span class="plans-count" id="plansCount"></span>
+        </div>
+
+        <div id="aiTrigger" class="cta-block" style="display:none;margin-bottom:28px;">
+          <div>
+            <div class="cta-title">Get an AI recommendation</div>
+            <div class="cta-sub">Claude analyzes your usage pattern against every plan to find the one that saves you the most over 12 months.</div>
+          </div>
+          <button class="btn" id="recBtn">Analyze &amp; Recommend</button>
+        </div>
+
+        <div id="recMsg" class="msg"></div>
+        <div id="aiRecCard" class="ai-rec" style="display:none;"></div>
+
+        <div id="plansTableWrap" style="display:none;">
+          <div class="table-wrap">
+            <table class="plans-table">
+              <thead>
+                <tr>
+                  <th style="width:38%;">Plan</th>
+                  <th>¢/kWh</th>
+                  <th>Est/Mo</th>
+                  <th>Term</th>
+                  <th style="text-align:left;">Tags</th>
+                  <th style="text-align:left;">Links</th>
+                </tr>
+              </thead>
+              <tbody id="plansTableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination" style="display:none;">
+            <button class="btn btn-ghost btn-sm" id="pagePrev">← Prev</button>
+            <span class="page-info" id="pageInfo"></span>
+            <button class="btn btn-ghost btn-sm" id="pageNext">Next →</button>
+          </div>
+          <p class="disclosure">Estimates interpolated from Power to Choose's published rates at 500/1000/2000 kWh tiers. TOU estimates assume average usage patterns — your night-heavy profile may yield lower actual costs. Always review the EFL before signing up.</p>
+        </div>
+
+        <div class="restart-row">
+          <button class="btn btn-ghost btn-sm" id="backToReportBtn">← Back to Report</button>
+          <button class="btn btn-ghost btn-sm" id="saveBtn4" style="display:none;">Save Progress</button>
+          <button class="btn btn-ghost btn-sm" id="restartBtn2" style="margin-left:auto;">Start Over</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /card -->
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-powered">
+      <!-- Anthropic / Claude spark icon -->
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
+      </svg>
+      Powered by Claude Sonnet
+    </div>
+    <div class="footer-copy">
+      Energy Plan Optimizer &copy; 2026 Ryan R. Scott &nbsp;&middot;&nbsp; All Rights Reserved
+    </div>
+  </footer>
+
+</div><!-- /shell -->
+
+<!-- Plan detail modal -->
+<div class="modal-overlay" id="planModal" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-co" id="modalCo"></div>
+        <div class="modal-title" id="modalTitle"></div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-stats">
+      <div class="modal-stat">
+        <div class="modal-stat-val" id="modalAnnual"></div>
+        <div class="modal-stat-lbl">Annual Cost</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val" id="modalAvgMo"></div>
+        <div class="modal-stat-lbl">Avg Monthly</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val" id="modalRate"></div>
+        <div class="modal-stat-lbl">Avg API Rate</div>
+      </div>
+    </div>
+
+    <!-- Rate editor -->
+    <div class="modal-rate-editor" id="modalRateEditor">
+      <div class="modal-rate-warning" id="modalRateWarning" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        <span>This is a Time-of-Use plan. The API only provides a blended average rate — night usage may be free or discounted. Enter the actual day and night rates from the plan's EFL for an accurate breakdown.</span>
+      </div>
+      <div class="modal-rate-fields">
+        <div class="modal-rate-field">
+          <label>Day rate</label>
+          <div class="rate-input-wrap">
+            <input type="number" id="modalDayRate" step="0.01" min="0" />
+            <span>¢/kWh</span>
+          </div>
+        </div>
+        <div class="modal-rate-field">
+          <label>Night rate</label>
+          <div class="rate-input-wrap">
+            <input type="number" id="modalNightRate" step="0.01" min="0" />
+            <span>¢/kWh</span>
+          </div>
+        </div>
+        <span class="modal-rate-hint" id="modalEflLink"></span>
+      </div>
+    </div>
+
+    <div class="modal-chart-wrap">
+      <canvas id="modalChart"></canvas>
+    </div>
+    <div class="modal-legend">
+      <div class="modal-legend-item">
+        <div class="modal-legend-dot" style="background:var(--accent);"></div>Day
+      </div>
+      <div class="modal-legend-item">
+        <div class="modal-legend-dot" style="background:var(--cyan);"></div>Night
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="modal-breakdown">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Day kWh</th>
+            <th>Night kWh</th>
+            <th style="color:var(--accent);">Day Cost</th>
+            <th style="color:var(--cyan);">Night Cost</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="modalTbody"></tbody>
+      </table>
+    </div>
+    <p class="modal-note" id="modalNote"></p>
+  </div>
+</div>
+
+<script>
+  // ── Theme ───────────────────────────────────────────────
+  const html       = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon  = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    const isDark = theme === 'dark';
+    themeIcon.textContent  = isDark ? '☀️' : '🌙';
+    themeLabel.textContent = isDark ? 'Light' : 'Dark';
+    localStorage.setItem('watt-theme', theme);
+  }
+
+  themeToggle.addEventListener('click', () => {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // Default: light mode
+  applyTheme(localStorage.getItem('watt-theme') || 'light');
+
+  // ── State ───────────────────────────────────────────────
+  let usageChart        = null;
+  let hourlyChart       = null;
+  let dayNightPie       = null;
+  let modalChartInst    = null;
+  let billData          = null;
+  let usageData         = null;
+  let lastRecommendation = null;
+  let allPlans   = [];
+  let activeType      = 'all';
+  let activeTerm      = 'all';
+  let activeCompanies = new Set();
+  let renewOnly       = false;
+  let touOnly         = false;
+  let currentPage     = 1;
+  const PAGE_SIZE     = 10;
+
+  // ── Elements ────────────────────────────────────────────
+  const billDropZone   = document.getElementById('billDropZone');
+  const billFileInput  = document.getElementById('billFileInput');
+  const billMsg        = document.getElementById('billMsg');
+  const gbDropZone     = document.getElementById('gbDropZone');
+  const gbFileInput    = document.getElementById('gbFileInput');
+  const gbMsg          = document.getElementById('gbMsg');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingText    = document.getElementById('loadingText');
+
+  function setLoading(on, text = 'Processing…') {
+    loadingText.textContent = text;
+    loadingOverlay.classList.toggle('visible', on);
+  }
+  function showMsg(el, text, type) { el.textContent = text; el.className = `msg ${type}`; }
+  function clearMsg(el) { el.className = 'msg'; }
+
+  function goStep(n) {
+    [1,2,3,4].forEach(i => {
+      document.getElementById(`panel-${i}`).classList.toggle('active', i === n);
+      const dot  = document.getElementById(`sd-${i}`);
+      const item = document.getElementById(`si-${i}`);
+      dot.classList.remove('active','done');
+      item.classList.remove('active');
+      if (i < n)  { dot.classList.add('done');  dot.textContent = '✓'; }
+      if (i === n){ dot.classList.add('active'); dot.textContent = i; item.classList.add('active'); }
+      if (i > n)  { dot.textContent = i; }
+    });
+    [1,2,3].forEach(i => {
+      document.getElementById(`sc-${i}`).classList.toggle('done', i < n);
+    });
+  }
+
+  // ── Step 1 ──────────────────────────────────────────────
+  billDropZone.addEventListener('dragover',  e => { e.preventDefault(); billDropZone.classList.add('dragover'); });
+  billDropZone.addEventListener('dragleave', ()  => billDropZone.classList.remove('dragover'));
+  billDropZone.addEventListener('drop', e => {
+    e.preventDefault(); billDropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleBill(e.dataTransfer.files[0]);
+  });
+  billFileInput.addEventListener('change', () => {
+    if (billFileInput.files[0]) handleBill(billFileInput.files[0]);
+  });
+
+  async function handleBill(file) {
+    clearMsg(billMsg);
+    setLoading(true, 'Extracting info from bill…');
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res  = await fetch('/api/extract', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to read bill.');
+      billData = data;
+      document.getElementById('displayEsi').textContent   = data.esi_id       || '—';
+      document.getElementById('displayMeter').textContent = data.meter_number || '—';
+      goStep(2);
+    } catch (err) { showMsg(billMsg, err.message, 'error'); }
+    finally { setLoading(false); }
+  }
+
+  // ── Step 2 ──────────────────────────────────────────────
+  gbDropZone.addEventListener('dragover',  e => { e.preventDefault(); gbDropZone.classList.add('dragover'); });
+  gbDropZone.addEventListener('dragleave', ()  => gbDropZone.classList.remove('dragover'));
+  gbDropZone.addEventListener('drop', e => {
+    e.preventDefault(); gbDropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleGreenButton(e.dataTransfer.files[0]);
+  });
+  gbFileInput.addEventListener('change', () => {
+    if (gbFileInput.files[0]) handleGreenButton(gbFileInput.files[0]);
+  });
+
+  async function handleGreenButton(file) {
+    clearMsg(gbMsg);
+    setLoading(true, 'Parsing Green Button data…');
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res  = await fetch('/api/greenbutton', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to parse file.');
+      usageData = data;
+      renderResults(data);
+      goStep(3);
+    } catch (err) { showMsg(gbMsg, err.message, 'error'); }
+    finally { setLoading(false); }
+  }
+
+  // ── Step 3: render results ───────────────────────────────
+  function renderResults(data) {
+    const monthly    = data.monthly;
+    const total      = data.total_kwh;
+    const avgMo      = data.avg_kwh;
+    const avgDay     = data.avg_daily_kwh;
+    const maxRow     = monthly.reduce((a,b) => b.kwh > a.kwh ? b : a, monthly[0]);
+    const totalDay   = monthly.reduce((s,r) => s + r.day_kwh, 0);
+    const totalNight = monthly.reduce((s,r) => s + r.night_kwh, 0);
+
+    document.getElementById('statTotal').innerHTML  = `${Math.round(total).toLocaleString()}<span> kWh</span>`;
+    document.getElementById('statAvg').innerHTML    = `${Math.round(avgMo).toLocaleString()}<span> kWh</span>`;
+    document.getElementById('statDaily').innerHTML  = `${avgDay.toFixed(1)}<span> kWh</span>`;
+    document.getElementById('statPeak').textContent = maxRow?.month ?? '—';
+    document.getElementById('footerTotal').textContent = `${Math.round(total).toLocaleString()} kWh`;
+    document.getElementById('footerDay').textContent   = `${Math.round(totalDay).toLocaleString()} kWh`;
+    document.getElementById('footerNight').textContent = `${Math.round(totalNight).toLocaleString()} kWh`;
+
+    const tbody = document.getElementById('usageTableBody');
+    tbody.innerHTML = monthly.map(r => {
+      const diff = r.kwh - avgMo;
+      const pct  = avgMo > 0 ? Math.round((diff / avgMo) * 100) : 0;
+      const cls  = diff > 0 ? 'hi' : (diff < 0 ? 'lo' : '');
+      const sign = pct > 0 ? '+' : '';
+      return `<tr>
+        <td class="month-cell">${r.month}</td>
+        <td>${r.kwh.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+        <td class="day-cell">${r.day_kwh.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+        <td class="night-cell">${r.night_kwh.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+        <td>${r.avg_daily_kwh.toFixed(1)}</td>
+        <td class="${cls}">${sign}${pct}%</td>
+      </tr>`;
+    }).join('');
+
+    const labels  = monthly.map(r => r.month);
+    const isDark  = html.getAttribute('data-theme') === 'dark';
+    const muted   = isDark ? '#7f92a8' : '#766f63';
+    const grid    = isDark ? '#192538' : '#f7f6f3';
+    const bdr     = isDark ? '#1f2f47' : '#e8e5df';
+    const tipBg   = isDark ? '#131e32' : '#ffffff';
+    const tipBody = isDark ? '#eef2f9' : '#1a1714';
+    const accentC = isDark ? 'rgba(245,158,11,' : 'rgba(217,119,6,';
+    const cyanC   = isDark ? 'rgba(56,189,248,' : 'rgba(2,132,199,';
+
+    const scales = {
+      x: { ticks:{color:muted,font:{family:'Plus Jakarta Sans',size:11},maxRotation:40}, grid:{display:false}, border:{color:bdr} },
+      y: { ticks:{color:muted,font:{family:'Plus Jakarta Sans',size:11},callback:v=>v.toLocaleString()}, grid:{color:grid}, border:{display:false} },
+    };
+    const tip = {
+      backgroundColor:tipBg, borderColor:bdr, borderWidth:1,
+      titleColor:muted, bodyColor:tipBody, padding:12, cornerRadius:10,
+      titleFont:{family:'Plus Jakarta Sans',size:12}, bodyFont:{family:'Plus Jakarta Sans',size:13},
+    };
+
+    if (usageChart) usageChart.destroy();
+    usageChart = new Chart(document.getElementById('usageChart').getContext('2d'), {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          data: monthly.map(r=>r.kwh),
+          backgroundColor: monthly.map(r => r.month === maxRow?.month ? accentC+'0.9)' : accentC+'0.4)'),
+          borderColor:'transparent', borderRadius:5,
+        }],
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{label:ctx=>` ${ctx.parsed.y.toLocaleString(undefined,{minimumFractionDigits:1})} kWh`}} },
+        scales,
+      },
+    });
+
+    // ── Hourly average chart ─────────────────────────────────
+    const hourlyAvg = data.hourly_avg || [];
+    const hourLabels = Array.from({length:24}, (_,h) => {
+      if (h === 0)  return '12am';
+      if (h < 12)   return `${h}am`;
+      if (h === 12) return '12pm';
+      return `${h-12}pm`;
+    });
+    const accentSolid = isDark ? '#f59e0b' : '#d97706';
+    const cyanSolid   = isDark ? '#38bdf8' : '#0284c7';
+
+    if (hourlyChart) hourlyChart.destroy();
+    hourlyChart = new Chart(document.getElementById('hourlyChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: hourLabels,
+        datasets: [{
+          data: hourlyAvg,
+          borderColor: accentSolid,
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: hourlyAvg.map((_,h) => (h >= 6 && h <= 21) ? accentSolid : cyanSolid),
+          pointBorderColor: 'transparent',
+          backgroundColor: (ctx) => {
+            const chart = ctx.chart;
+            const {chartArea} = chart;
+            if (!chartArea) return 'transparent';
+            const gradient = chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, isDark ? 'rgba(245,158,11,0.18)' : 'rgba(217,119,6,0.12)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            return gradient;
+          },
+          fill: true,
+          tension: 0.4,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...tip, callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(3)} kWh avg` } },
+        },
+        scales: {
+          x: { ...scales.x, ticks: { ...scales.x.ticks, maxRotation: 45, minRotation: 45, font: { size: 10 } } },
+          y: { ...scales.y, title: { display: false } },
+        },
+      },
+    });
+
+    // ── Day vs Night doughnut chart ───────────────────────────
+
+    if (dayNightPie) dayNightPie.destroy();
+    dayNightPie = new Chart(document.getElementById('dayNightPie').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Day (6am–10pm)', 'Night (10pm–6am)'],
+        datasets: [{
+          data: [Math.round(totalDay), Math.round(totalNight)],
+          backgroundColor: [accentC+'0.82)', cyanC+'0.72)'],
+          borderColor: isDark ? '#131e32' : '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 8,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            ...tip,
+            callbacks: {
+              label: ctx => {
+                const val = ctx.parsed;
+                const sum = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                return ` ${val.toLocaleString()} kWh (${Math.round(val/sum*100)}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // ── Step 3 → 4 ──────────────────────────────────────────
+  document.getElementById('goPlansBtn').addEventListener('click', () => {
+    if (!usageData) return;
+    const monthly    = usageData.monthly;
+    const totalDay   = monthly.reduce((s,r)=>s+r.day_kwh,0);
+    const totalNight = monthly.reduce((s,r)=>s+r.night_kwh,0);
+    const nightPct   = totalNight / (totalDay + totalNight);
+
+    document.getElementById('plansContext').innerHTML = `
+      <div>Avg monthly: <strong>${Math.round(usageData.avg_kwh).toLocaleString()} kWh</strong></div>
+      <div>Daily avg: <strong>${usageData.avg_daily_kwh.toFixed(1)} kWh</strong></div>
+      <div>Night usage: <strong>${Math.round(nightPct*100)}%</strong></div>
+      <div style="color:var(--text-dim);font-size:13px;">Enter your ZIP to compare live rates</div>
+    `;
+    document.getElementById('nightCallout').style.display = nightPct >= 0.35 ? '' : 'none';
+    goStep(4);
+  });
+
+  // ── Find Plans ───────────────────────────────────────────
+  document.getElementById('findPlansBtn').addEventListener('click', fetchPlans);
+  document.getElementById('zipInput').addEventListener('keydown', e => { if (e.key==='Enter') fetchPlans(); });
+
+  async function fetchPlans() {
+    const zip = document.getElementById('zipInput').value.trim();
+    const msg = document.getElementById('plansMsg');
+    clearMsg(msg);
+    if (!zip || !/^\d{5}$/.test(zip)) { showMsg(msg,'Please enter a valid 5-digit ZIP code.','error'); return; }
+    if (!usageData) return;
+    const monthly    = usageData.monthly;
+    const totalDay   = monthly.reduce((s,r)=>s+r.day_kwh,0);
+    const totalNight = monthly.reduce((s,r)=>s+r.night_kwh,0);
+    const nightPct   = totalNight / (totalDay+totalNight);
+    setLoading(true,'Fetching plans from Power to Choose…');
+    document.getElementById('findPlansBtn').disabled = true;
+    try {
+      const res  = await fetch('/api/plans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({zip_code:zip,avg_monthly_kwh:usageData.avg_kwh,night_pct:nightPct})});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail||'Failed to fetch plans.');
+      allPlans = data.plans;
+      activeType='all'; activeTerm='all'; activeCompanies=new Set(); renewOnly=false; touOnly=false;
+      document.querySelectorAll('[data-filter-type]').forEach(b=>b.classList.toggle('active',b.dataset.filterType==='all'));
+      document.getElementById('filterRenew').classList.remove('active');
+      // Populate term select dropdown from actual plan data
+      const termSel = document.getElementById('termSelect');
+      const termVals = ['all', ...Array.from(new Set(data.plans.map(p=>p.term_months).filter(t=>t>0))).sort((a,b)=>a-b)];
+      termSel.innerHTML = termVals.map(t =>
+        `<option value="${t}">${t==='all'?'Any':t+' mo'}</option>`
+      ).join('');
+      termSel.value = 'all';
+      // Populate company checklist
+      const companies = Array.from(new Set(data.plans.map(p=>p.company))).sort();
+      const companyList = document.getElementById('companyList');
+      companyList.innerHTML = companies.map(c => {
+        const id = 'co_' + c.replace(/\W/g,'_');
+        return `<label class="company-item"><input type="checkbox" id="${id}" value="${escHtml(c)}" /><span>${escHtml(c)}</span></label>`;
+      }).join('');
+      companyList.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+          if(cb.checked) activeCompanies.add(cb.value);
+          else activeCompanies.delete(cb.value);
+          updateCompanyBtn();
+          currentPage=1;
+          renderPlans();
+        });
+      });
+      updateCompanyBtn();
+      document.getElementById('companySearch').value='';
+      currentPage = 1;
+      document.getElementById('filterTou').classList.remove('active');
+      document.getElementById('aiTrigger').style.display='';
+      document.getElementById('filterRow').style.display='';
+      document.getElementById('plansTableWrap').style.display='';
+      document.getElementById('aiRecCard').style.display='none';
+      renderPlans();
+    } catch(err) { showMsg(msg,err.message,'error'); }
+    finally { setLoading(false); document.getElementById('findPlansBtn').disabled=false; }
+  }
+
+  // ── Filters ──────────────────────────────────────────────
+  document.querySelectorAll('[data-filter-type]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      activeType=btn.dataset.filterType;
+      document.querySelectorAll('[data-filter-type]').forEach(b=>b.classList.toggle('active',b===btn));
+      currentPage=1;
+      renderPlans();
+    });
+  });
+  document.getElementById('filterRenew').addEventListener('click',function(){renewOnly=!renewOnly;this.classList.toggle('active',renewOnly);currentPage=1;renderPlans();});
+  document.getElementById('filterTou').addEventListener('click',function(){touOnly=!touOnly;this.classList.toggle('active',touOnly);currentPage=1;renderPlans();});
+  document.getElementById('termSelect').addEventListener('change',function(){
+    activeTerm = this.value==='all'?'all':Number(this.value);
+    currentPage=1;
+    renderPlans();
+  });
+
+  // ── Company filter ────────────────────────────────────────
+  const companyFilterBtn = document.getElementById('companyFilterBtn');
+  const companyPanel     = document.getElementById('companyPanel');
+  companyFilterBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    companyPanel.classList.toggle('open');
+    if(companyPanel.classList.contains('open')) document.getElementById('companySearch').focus();
+  });
+  document.addEventListener('click', (e)=>{
+    if(!companyPanel.contains(e.target) && e.target!==companyFilterBtn) {
+      companyPanel.classList.remove('open');
+    }
+  });
+  document.getElementById('companyClear').addEventListener('click', ()=>{
+    activeCompanies = new Set();
+    document.querySelectorAll('#companyList input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    document.getElementById('companySearch').value='';
+    document.querySelectorAll('#companyList .company-item').forEach(el=>el.style.display='');
+    updateCompanyBtn();
+    currentPage=1;
+    renderPlans();
+  });
+  document.getElementById('companySearch').addEventListener('input', function(){
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#companyList .company-item').forEach(el=>{
+      const name = el.querySelector('span').textContent.toLowerCase();
+      el.style.display = name.includes(q) ? '' : 'none';
+    });
+  });
+
+  function updateCompanyBtn() {
+    const n = activeCompanies.size;
+    companyFilterBtn.textContent = n === 0
+      ? 'All Companies ▾'
+      : n === 1 ? [...activeCompanies][0] + ' ▾'
+      : n + ' Companies ▾';
+    companyFilterBtn.classList.toggle('active', n > 0);
+  }
+
+  document.getElementById('pagePrev').addEventListener('click',()=>{if(currentPage>1){currentPage--;renderPlans();}});
+  document.getElementById('pageNext').addEventListener('click',()=>{
+    const total=getFilteredPlans().length;
+    if(currentPage<Math.ceil(total/PAGE_SIZE)){currentPage++;renderPlans();}
+  });
+
+  function getFilteredPlans() {
+    let p = allPlans;
+    if (activeType!=='all')       p=p.filter(x=>x.rate_type===activeType);
+    if (activeTerm!=='all')       p=p.filter(x=>x.term_months===activeTerm);
+    if (activeCompanies.size > 0) p=p.filter(x=>activeCompanies.has(x.company));
+    if (renewOnly) p=p.filter(x=>x.renewable_pct>=100);
+    if (touOnly)   p=p.filter(x=>x.is_tou);
+    return p;
+  }
+
+  function renderPlans() {
+    const all = getFilteredPlans();
+    const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const plans = all.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    document.getElementById('plansCount').textContent=`${all.length} plan${all.length!==1?'s':''}`;
+    // Pagination controls
+    const pag = document.getElementById('pagination');
+    pag.style.display = all.length > PAGE_SIZE ? '' : 'none';
+    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('pagePrev').disabled = currentPage <= 1;
+    document.getElementById('pageNext').disabled = currentPage >= totalPages;
+    const tbody=document.getElementById('plansTableBody');
+    tbody.innerHTML=plans.map(p=>{
+      const badges=[];
+      if(p.night_benefit) badges.push(`<span class="badge badge-night">🌙 Night Saver</span>`);
+      else if(p.is_tou)   badges.push(`<span class="badge badge-tou">TOU</span>`);
+      if(p.renewable_pct>=100) badges.push(`<span class="badge badge-green">🌿 100% Green</span>`);
+      if(p.new_customer_only)  badges.push(`<span class="badge badge-new">New Only</span>`);
+      if(p.prepaid)            badges.push(`<span class="badge badge-prepaid">Prepaid</span>`);
+      const links=[];
+      if(p.fact_sheet) links.push(`<a class="plan-link" href="${escHtml(p.fact_sheet)}" target="_blank">EFL</a>`);
+      if(p.go_to_plan) links.push(`<a class="plan-link" href="${escHtml(p.go_to_plan)}" target="_blank">Sign Up →</a>`);
+      const idx = allPlans.indexOf(p);
+      return `<tr>
+        <td class="plan-cell" data-idx="${idx}"><div class="plan-company">${escHtml(p.company)}</div><div class="plan-name">${escHtml(p.plan)}</div></td>
+        <td>${p.rate_cents_kwh.toFixed(1)}¢</td>
+        <td style="color:var(--accent);font-weight:700;">$${p.estimated_monthly.toFixed(0)}</td>
+        <td>${p.term_months>1?p.term_months+'mo':'Month'}</td>
+        <td style="text-align:left;">${badges.join(' ')}</td>
+        <td style="text-align:left;">${links.join(' ')}</td>
+      </tr>`;
+    }).join('')||`<tr><td colspan="6" style="color:var(--text-muted);padding:28px 20px;text-align:center;font-size:14px;font-weight:500;">No plans match the current filters.</td></tr>`;
+  }
+
+  function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  // ── Plan detail modal ─────────────────────────────────────
+  document.getElementById('plansTableBody').addEventListener('click', e => {
+    const cell = e.target.closest('.plan-cell');
+    if (!cell) return;
+    const plan = allPlans[+cell.dataset.idx];
+    if (plan) showPlanModal(plan);
+  });
+
+  function showPlanModal(plan) {
+    const monthly  = (usageData && usageData.monthly) || [];
+    const isTou    = plan.is_tou;
+    const apiRate  = plan.rate_cents_kwh;
+
+    // Static header fields
+    document.getElementById('modalCo').textContent    = plan.company;
+    document.getElementById('modalTitle').textContent = plan.plan;
+    document.getElementById('modalRate').textContent  = apiRate.toFixed(1) + '¢';
+
+    // EFL link hint
+    const eflEl = document.getElementById('modalEflLink');
+    eflEl.innerHTML = plan.fact_sheet
+      ? `Rates from <a href="${escHtml(plan.fact_sheet)}" target="_blank">this plan's EFL ↗</a>`
+      : 'Find rates on the plan\'s EFL';
+
+    // TOU warning visibility
+    document.getElementById('modalRateWarning').style.display = isTou ? '' : 'none';
+
+    // Pre-fill rate inputs: TOU → day=API rate, night=0; flat → both=API rate
+    const dayInput   = document.getElementById('modalDayRate');
+    const nightInput = document.getElementById('modalNightRate');
+    dayInput.value   = apiRate.toFixed(2);
+    nightInput.value = isTou ? '0.00' : apiRate.toFixed(2);
+
+    // Note
+    document.getElementById('modalNote').textContent = isTou
+      ? 'Costs update live as you edit the rates above. Enter exact values from the EFL. TDU delivery charges are not included.'
+      : 'Costs calculated from your actual recorded usage × the rate above. TDU delivery charges are not included.';
+
+    // ── Reactive recalc ──────────────────────────────────────
+    function recalc() {
+      const dayRate   = Math.max(0, parseFloat(dayInput.value)   || 0);
+      const nightRate = Math.max(0, parseFloat(nightInput.value) || 0);
+
+      const rows = monthly.map(m => {
+        const dayKwh   = m.day_kwh   || 0;
+        const nightKwh = m.night_kwh || 0;
+        const dayCost   = dayKwh   * dayRate   / 100;
+        const nightCost = nightKwh * nightRate / 100;
+        return {
+          label: m.label || m.month,
+          dayKwh, nightKwh,
+          dayCost, nightCost,
+          total: dayCost + nightCost,
+        };
+      });
+
+      const annual   = rows.reduce((s, r) => s + r.total, 0);
+      const avgMonth = rows.length ? annual / rows.length : 0;
+
+      document.getElementById('modalAnnual').textContent = '$' + Math.round(annual).toLocaleString();
+      document.getElementById('modalAvgMo').textContent  = '$' + Math.round(avgMonth).toLocaleString();
+
+      // Table
+      const totDay   = rows.reduce((s, r) => s + r.dayCost,   0);
+      const totNight = rows.reduce((s, r) => s + r.nightCost, 0);
+      document.getElementById('modalTbody').innerHTML =
+        rows.map(r => `<tr>
+          <td>${escHtml(r.label)}</td>
+          <td>${r.dayKwh.toFixed(0)}</td>
+          <td>${r.nightKwh.toFixed(0)}</td>
+          <td style="color:var(--accent);">$${r.dayCost.toFixed(2)}</td>
+          <td style="color:var(--cyan);">$${r.nightCost.toFixed(2)}</td>
+          <td>$${r.total.toFixed(2)}</td>
+        </tr>`).join('') +
+        `<tr class="modal-total-row">
+          <td colspan="3">Total</td>
+          <td style="color:var(--accent);">$${totDay.toFixed(2)}</td>
+          <td style="color:var(--cyan);">$${totNight.toFixed(2)}</td>
+          <td>$${annual.toFixed(2)}</td>
+        </tr>`;
+
+      // Chart (destroy + recreate on each recalc)
+      if (modalChartInst) { modalChartInst.destroy(); modalChartInst = null; }
+      const isDark      = html.getAttribute('data-theme') === 'dark';
+      const textMuted   = isDark ? '#7f92a8' : '#a09890';
+      const gridColor   = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+      const accentSolid = isDark ? '#f59e0b' : '#d97706';
+      const cyanSolid   = isDark ? '#38bdf8' : '#0284c7';
+
+      modalChartInst = new Chart(
+        document.getElementById('modalChart').getContext('2d'),
+        {
+          type: 'bar',
+          data: {
+            labels: rows.map(r => r.label),
+            datasets: [
+              { label: 'Day',   data: rows.map(r => +r.dayCost.toFixed(2)),   backgroundColor: accentSolid, borderRadius: 3, stack: 'cost' },
+              { label: 'Night', data: rows.map(r => +r.nightCost.toFixed(2)), backgroundColor: cyanSolid,   borderRadius: 3, stack: 'cost' },
+            ],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label:  ctx  => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`,
+                  footer: items => ` Total: $${items.reduce((s,i)=>s+i.parsed.y,0).toFixed(2)}`,
+                },
+              },
+            },
+            scales: {
+              x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { color: textMuted, font: { family:"'Plus Jakarta Sans'", size:11, weight:'600' } } },
+              y: { stacked: true, grid: { color: gridColor }, border: { display: false }, ticks: { color: textMuted, font: { family:"'Plus Jakarta Sans'", size:11, weight:'600' }, callback: v => '$'+v } },
+            },
+          },
+        }
+      );
+    }
+
+    // Wire inputs for live updates
+    dayInput.oninput   = recalc;
+    nightInput.oninput = recalc;
+    recalc(); // initial render
+
+    document.getElementById('planModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePlanModal() {
+    document.getElementById('planModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('modalClose').addEventListener('click', closePlanModal);
+  document.getElementById('planModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('planModal')) closePlanModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePlanModal(); });
+
+  // ── AI Recommendation ─────────────────────────────────────
+  document.getElementById('recBtn').addEventListener('click',async()=>{
+    const recBtn=document.getElementById('recBtn');
+    const recMsg=document.getElementById('recMsg');
+    const recCard=document.getElementById('aiRecCard');
+    clearMsg(recMsg); recCard.style.display='none';
+    recBtn.disabled=true; recBtn.textContent='Analyzing…';
+    setLoading(true,'Claude is analyzing your usage and plans…');
+    try {
+      const res=await fetch('/api/recommend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usage:usageData,plans:getFilteredPlans(),zip_code:document.getElementById('zipInput').value.trim()})});
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.detail||'Recommendation failed.');
+      renderRecommendation(data);
+    } catch(err){showMsg(recMsg,err.message,'error');}
+    finally{setLoading(false);recBtn.disabled=false;recBtn.textContent='Analyze & Recommend';}
+  });
+
+  function renderRecommendation(d){
+    lastRecommendation = d;
+    const card=document.getElementById('aiRecCard');
+    const factors=(d.key_factors||[]).map(f=>`<div class="ai-rec-factor">${escHtml(f)}</div>`).join('');
+    const runnerUp=d.runner_up?`<div><div class="ai-rec-section-title">Runner-up</div><div class="ai-rec-secondary"><strong style="color:var(--text);font-weight:700;">${escHtml(d.runner_up.company)} — ${escHtml(d.runner_up.plan)}</strong><br>${escHtml(d.runner_up.why)}</div></div>`:'';
+    const watchOut=d.watch_out?`<div class="ai-rec-warn">⚠ &nbsp;${escHtml(d.watch_out)}</div>`:'';
+    card.innerHTML=`
+      <div class="ai-rec-header">
+        <div class="ai-rec-label">⚡ AI Recommendation</div>
+        <div class="ai-rec-model">Claude Sonnet · ${allPlans.length} plans analyzed</div>
+      </div>
+      <div class="ai-rec-body">
+        <div class="ai-rec-company">${escHtml(d.recommended_company)}</div>
+        <div class="ai-rec-plan-name">${escHtml(d.recommended_plan)}</div>
+        <div class="ai-rec-cost">$${Number(d.estimated_annual_cost).toLocaleString()}<span> / year</span></div>
+        <div class="ai-rec-reasoning">${escHtml(d.reasoning)}</div>
+        <div class="ai-rec-factors"><div class="ai-rec-factor-title">Why this plan</div>${factors}</div>
+        <div class="ai-rec-divider"></div>
+        <div class="ai-rec-row">${runnerUp}</div>
+        ${watchOut}
+      </div>`;
+    card.style.display='';
+    card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+
+  // ── Navigation ───────────────────────────────────────────
+  document.getElementById('backToBillBtn').addEventListener('click',()=>goStep(1));
+  document.getElementById('backToReportBtn').addEventListener('click',()=>goStep(3));
+
+  function doRestart(){
+    billFileInput.value=''; gbFileInput.value='';
+    billData=null; usageData=null; allPlans=[];
+    activeType='all'; activeTerm='all'; activeCompanies=new Set(); renewOnly=false; touOnly=false; currentPage=1;
+    clearMsg(billMsg); clearMsg(gbMsg);
+    document.getElementById('displayEsi').textContent='—';
+    document.getElementById('displayMeter').textContent='—';
+    document.getElementById('plansTableWrap').style.display='none';
+    document.getElementById('filterRow').style.display='none';
+    document.getElementById('zipInput').value='';
+    companyPanel.classList.remove('open');
+    updateCompanyBtn();
+    goStep(1);
+  }
+  document.getElementById('restartBtn').addEventListener('click',doRestart);
+  document.getElementById('restartBtn2').addEventListener('click',doRestart);
+
+  goStep(1);
+
+  // ── Auth0 + AWS Session Save/Restore ─────────────────────
+  let auth0Client  = null;
+  let currentUser  = null;
+  let savedSession = null;
+
+  async function initAuth() {
+    // Fetch Auth0 config from the backend (env vars: AUTH0_DOMAIN, AUTH0_CLIENT_ID)
+    let cfg;
+    try {
+      const res = await fetch('/api/auth-config');
+      cfg = await res.json();
+    } catch (e) {
+      console.warn('[Auth0] Could not fetch config — session save/load disabled.', e);
+      updateAuthUI();
+      return;
+    }
+
+    if (!cfg.domain || cfg.domain === '' || cfg.domain === 'YOUR_AUTH0_DOMAIN') {
+      console.warn('[Auth0] AUTH0_DOMAIN not set on server — session save/load disabled.');
+      updateAuthUI();
+      return;
+    }
+
+    try {
+      auth0Client = await createAuth0Client({
+        domain: cfg.domain,
+        client_id: cfg.clientId,
+        redirect_uri: window.location.origin,
+        cacheLocation: 'localstorage',
+      });
+    } catch (e) {
+      console.error('[Auth0] Failed to initialise client:', e);
+      updateAuthUI();
+      return;
+    }
+
+    // Handle the redirect callback (user returning from Auth0 login page)
+    if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
+      try {
+        await auth0Client.handleRedirectCallback();
+      } catch (e) {
+        console.error('[Auth0] Redirect callback error:', e);
+      }
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    const isAuthenticated = await auth0Client.isAuthenticated();
+    if (isAuthenticated) {
+      currentUser = await auth0Client.getUser();
+      updateAuthUI();
+      await loadSavedSession();
+    } else {
+      updateAuthUI();
+    }
+  }
+
+  function updateAuthUI() {
+    const el = document.getElementById('headerAuth');
+    if (currentUser) {
+      const label = currentUser.email || currentUser.name || 'Signed in';
+      const short = label.length > 24 ? label.slice(0, 22) + '…' : label;
+      el.innerHTML = `<span class="auth-user-email">${escHtml(short)}</span>
+        <button class="btn btn-ghost btn-sm" id="signOutBtn">Sign Out</button>`;
+      document.getElementById('signOutBtn').addEventListener('click', doSignOut);
+    } else if (auth0Client) {
+      el.innerHTML = `<button class="btn btn-ghost btn-sm" id="signInBtn">Sign In</button>`;
+      document.getElementById('signInBtn').addEventListener('click',
+        () => auth0Client.loginWithRedirect());
+    } else {
+      el.innerHTML = '';
+    }
+    // Save buttons only visible when signed in
+    const s3 = document.getElementById('saveBtn');
+    const s4 = document.getElementById('saveBtn4');
+    if (s3) s3.style.display = currentUser ? '' : 'none';
+    if (s4) s4.style.display = currentUser ? '' : 'none';
+  }
+
+  // ── Session save / load ────────────────────────────────
+  async function loadSavedSession() {
+    if (!currentUser || !auth0Client) return;
+    try {
+      const claims = await auth0Client.getIdTokenClaims();
+      const token = claims.__raw;
+      const res = await fetch('/api/session', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) { console.warn('[session] GET failed:', res.status); return; }
+      const data = await res.json();
+      if (!data || Object.keys(data).length === 0) { hideResumeCard(); return; }
+      savedSession = data;
+      if (savedSession.usage_data) showResumeCard();
+      else hideResumeCard();
+    } catch (e) {
+      console.warn('[session] Could not load saved session:', e);
+    }
+  }
+
+  function showResumeCard() {
+    const card = document.getElementById('resumeCard');
+    const meta = document.getElementById('resumeMeta');
+    const d = savedSession;
+    const months = d.usage_data?.monthly?.length || 0;
+    const zip    = d.zip_code || '—';
+    const saved  = d.updated_at
+      ? new Date(d.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+      : 'recently';
+    meta.textContent = `Last saved ${saved} · ZIP ${zip} · ${months} months of data`;
+    card.style.display = '';
+  }
+
+  function hideResumeCard() {
+    document.getElementById('resumeCard').style.display = 'none';
+  }
+
+  function resumeSession() {
+    const d = savedSession;
+    if (!d) return;
+    hideResumeCard();
+    if (d.bill_data) {
+      billData = d.bill_data;
+      document.getElementById('displayEsi').textContent   = billData.esi_id       || '—';
+      document.getElementById('displayMeter').textContent = billData.meter_number || '—';
+    }
+    if (d.zip_code) document.getElementById('zipInput').value = d.zip_code;
+    if (d.usage_data) {
+      usageData = d.usage_data;
+      renderResults(usageData);
+      goStep(3);
+    }
+    if (d.recommendation) {
+      lastRecommendation = d.recommendation;
+      renderRecommendation(d.recommendation);
+      document.getElementById('aiRecCard').style.display = '';
+    }
+  }
+
+  async function saveSession() {
+    if (!currentUser || !auth0Client) {
+      if (auth0Client) auth0Client.loginWithRedirect();
+      return;
+    }
+    const btns = [document.getElementById('saveBtn'), document.getElementById('saveBtn4')].filter(Boolean);
+    btns.forEach(b => { b.textContent = 'Saving…'; b.disabled = true; });
+    try {
+      const claims = await auth0Client.getIdTokenClaims();
+      const token = claims.__raw;
+      const res = await fetch('/api/session', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bill_data:      billData   || null,
+          usage_data:     usageData  || null,
+          zip_code:       document.getElementById('zipInput').value.trim() || null,
+          recommendation: lastRecommendation || null,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      btns.forEach(b => { b.textContent = '✓ Saved'; });
+      setTimeout(() => btns.forEach(b => { b.textContent = 'Save Progress'; b.disabled = false; }), 2000);
+      savedSession = { ...(savedSession || {}),
+        usage_data: usageData, bill_data: billData,
+        zip_code: document.getElementById('zipInput').value.trim() || null,
+        updated_at: new Date().toISOString() };
+    } catch (e) {
+      console.error('[session] Save failed:', e);
+      btns.forEach(b => { b.textContent = '⚠ Error'; });
+      setTimeout(() => btns.forEach(b => { b.textContent = 'Save Progress'; b.disabled = false; }), 2500);
+    }
+  }
+
+  async function doSignOut() {
+    currentUser  = null;
+    savedSession = null;
+    updateAuthUI();
+    hideResumeCard();
+    if (auth0Client) {
+      auth0Client.logout({ returnTo: window.location.origin });
+    }
+  }
+
+  document.getElementById('resumeBtn').addEventListener('click', resumeSession);
+  document.getElementById('dismissResumeBtn').addEventListener('click', hideResumeCard);
+  document.getElementById('saveBtn').addEventListener('click', saveSession);
+  document.getElementById('saveBtn4').addEventListener('click', saveSession);
+
+  initAuth();
+</script>
+</body>
+</html>

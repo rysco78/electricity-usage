@@ -1,0 +1,25 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Playwright artifacts
+.playwright-mcp/
+
+# Claude
+.claude/
+
+# Images (large binaries)
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
