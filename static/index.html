@@ -1189,6 +1189,75 @@
     }
     .plan-link:hover { color: var(--text); border-color: var(--border-hi); }
 
+    /* ── Current plan banner ─────────────────────────────── */
+    .current-plan-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 24px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      flex-wrap: wrap;
+    }
+    .current-plan-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .current-plan-details {
+      flex: 1;
+      min-width: 0;
+    }
+    .current-plan-name {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .current-plan-sub {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .current-plan-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .current-plan-stat { text-align: center; }
+    .current-plan-stat-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .current-plan-stat-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .current-plan-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+    }
+    .save-positive { color: #16a34a; font-weight: 700; }
+    .save-negative { color: var(--text-muted); font-weight: 500; }
+    [data-theme="dark"] .save-positive { color: #4ade80; }
+
     /* ── AI recommendation ────────────────────────────────── */
     .ai-rec {
       border: 1.5px solid var(--accent);
@@ -1538,6 +1607,18 @@
             <div class="meter-box-label">Meter Number</div>
             <div class="meter-box-value" id="displayMeter">—</div>
           </div>
+          <div class="meter-box" id="displayProviderBox" style="display:none;">
+            <div class="meter-box-label">Current Provider</div>
+            <div class="meter-box-value" id="displayProvider">—</div>
+          </div>
+          <div class="meter-box" id="displayPlanBox" style="display:none;">
+            <div class="meter-box-label">Current Plan</div>
+            <div class="meter-box-value" id="displayPlan">—</div>
+          </div>
+          <div class="meter-box" id="displayRateBox" style="display:none;">
+            <div class="meter-box-label">Current Rate</div>
+            <div class="meter-box-value" id="displayRate">—</div>
+          </div>
         </div>
 
         <div class="instructions">
@@ -1688,6 +1769,27 @@
 
         <div id="plansMsg" class="msg"></div>
 
+        <div id="currentPlanBanner" style="display:none;margin-bottom:20px;">
+          <div class="current-plan-card">
+            <div class="current-plan-label">Your Current Plan</div>
+            <div class="current-plan-details">
+              <span id="cpProvider" class="current-plan-name">—</span>
+              <span id="cpPlan" class="current-plan-sub"></span>
+            </div>
+            <div class="current-plan-stats">
+              <div class="current-plan-stat">
+                <div class="current-plan-stat-val" id="cpRate">—</div>
+                <div class="current-plan-stat-lbl">¢/kWh</div>
+              </div>
+              <div class="current-plan-divider"></div>
+              <div class="current-plan-stat">
+                <div class="current-plan-stat-val" id="cpMonthly">—</div>
+                <div class="current-plan-stat-lbl">est/mo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="filterRow" class="filter-row" style="display:none;">
           <div class="filter-group">
             <span class="filter-label">Rate Type</span>
@@ -1739,9 +1841,10 @@
             <table class="plans-table">
               <thead>
                 <tr>
-                  <th style="width:38%;">Plan</th>
+                  <th style="width:36%;">Plan</th>
                   <th>¢/kWh</th>
                   <th>Est/Mo</th>
+                  <th id="savingsColHdr" style="display:none;">vs. Now</th>
                   <th>Term</th>
                   <th style="text-align:left;">Tags</th>
                   <th style="text-align:left;">Links</th>
@@ -1959,6 +2062,19 @@
       billData = data;
       document.getElementById('displayEsi').textContent   = data.esi_id       || '—';
       document.getElementById('displayMeter').textContent = data.meter_number || '—';
+      // Show optional fields only if extracted
+      if (data.provider) {
+        document.getElementById('displayProvider').textContent = data.provider;
+        document.getElementById('displayProviderBox').style.display = '';
+      }
+      if (data.plan_name) {
+        document.getElementById('displayPlan').textContent = data.plan_name;
+        document.getElementById('displayPlanBox').style.display = '';
+      }
+      if (data.rate_cents_kwh != null) {
+        document.getElementById('displayRate').textContent = data.rate_cents_kwh.toFixed(1) + '¢/kWh';
+        document.getElementById('displayRateBox').style.display = '';
+      }
       goStep(2);
     } catch (err) { showMsg(billMsg, err.message, 'error'); }
     finally { setLoading(false); }
@@ -2301,6 +2417,24 @@
   }
 
   function renderPlans() {
+    // ── Current plan banner ──────────────────────────────────
+    const hasRate = billData && billData.rate_cents_kwh != null;
+    const avgKwh  = usageData && usageData.avg_monthly_kwh;
+    const currentMonthly = hasRate && avgKwh ? (billData.rate_cents_kwh / 100) * avgKwh : null;
+    const banner  = document.getElementById('currentPlanBanner');
+    const savingsHdr = document.getElementById('savingsColHdr');
+    if (hasRate) {
+      document.getElementById('cpProvider').textContent = billData.provider || 'Current Provider';
+      document.getElementById('cpPlan').textContent     = billData.plan_name || '';
+      document.getElementById('cpRate').textContent     = billData.rate_cents_kwh.toFixed(1) + '¢';
+      document.getElementById('cpMonthly').textContent  = currentMonthly != null ? '$' + currentMonthly.toFixed(0) : '—';
+      banner.style.display   = '';
+      savingsHdr.style.display = '';
+    } else {
+      banner.style.display   = 'none';
+      savingsHdr.style.display = 'none';
+    }
+
     const all = getFilteredPlans();
     const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
     if (currentPage > totalPages) currentPage = totalPages;
@@ -2324,15 +2458,30 @@
       if(p.fact_sheet) links.push(`<a class="plan-link" href="${escHtml(p.fact_sheet)}" target="_blank">EFL</a>`);
       if(p.go_to_plan) links.push(`<a class="plan-link" href="${escHtml(p.go_to_plan)}" target="_blank">Sign Up →</a>`);
       const idx = allPlans.indexOf(p);
+      let savingsCell = '';
+      if (hasRate && currentMonthly != null) {
+        const diff = currentMonthly - p.estimated_monthly;
+        if (diff > 0.5) {
+          savingsCell = `<td class="save-positive">-$${diff.toFixed(0)}/mo</td>`;
+        } else if (diff < -0.5) {
+          savingsCell = `<td class="save-negative">+$${Math.abs(diff).toFixed(0)}/mo</td>`;
+        } else {
+          savingsCell = `<td style="color:var(--text-muted);">≈ same</td>`;
+        }
+      } else {
+        savingsCell = hasRate ? '<td>—</td>' : '';
+      }
+      const colspan = hasRate ? 7 : 6;
       return `<tr>
         <td class="plan-cell" data-idx="${idx}"><div class="plan-company">${escHtml(p.company)}</div><div class="plan-name">${escHtml(p.plan)}</div></td>
         <td>${p.rate_cents_kwh.toFixed(1)}¢</td>
         <td style="color:var(--accent);font-weight:700;">$${p.estimated_monthly.toFixed(0)}</td>
+        ${savingsCell}
         <td>${p.term_months>1?p.term_months+'mo':'Month'}</td>
         <td style="text-align:left;">${badges.join(' ')}</td>
         <td style="text-align:left;">${links.join(' ')}</td>
       </tr>`;
-    }).join('')||`<tr><td colspan="6" style="color:var(--text-muted);padding:28px 20px;text-align:center;font-size:14px;font-weight:500;">No plans match the current filters.</td></tr>`;
+    }).join('')||`<tr><td colspan="${hasRate?7:6}" style="color:var(--text-muted);padding:28px 20px;text-align:center;font-size:14px;font-weight:500;">No plans match the current filters.</td></tr>`;
   }
 
   function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -2530,6 +2679,10 @@
     clearMsg(billMsg); clearMsg(gbMsg);
     document.getElementById('displayEsi').textContent='—';
     document.getElementById('displayMeter').textContent='—';
+    document.getElementById('displayProviderBox').style.display='none';
+    document.getElementById('displayPlanBox').style.display='none';
+    document.getElementById('displayRateBox').style.display='none';
+    document.getElementById('currentPlanBanner').style.display='none';
     document.getElementById('plansTableWrap').style.display='none';
     document.getElementById('filterRow').style.display='none';
     document.getElementById('zipInput').value='';
@@ -2666,6 +2819,18 @@
       billData = d.bill_data;
       document.getElementById('displayEsi').textContent   = billData.esi_id       || '—';
       document.getElementById('displayMeter').textContent = billData.meter_number || '—';
+      if (billData.provider) {
+        document.getElementById('displayProvider').textContent = billData.provider;
+        document.getElementById('displayProviderBox').style.display = '';
+      }
+      if (billData.plan_name) {
+        document.getElementById('displayPlan').textContent = billData.plan_name;
+        document.getElementById('displayPlanBox').style.display = '';
+      }
+      if (billData.rate_cents_kwh != null) {
+        document.getElementById('displayRate').textContent = billData.rate_cents_kwh.toFixed(1) + '¢/kWh';
+        document.getElementById('displayRateBox').style.display = '';
+      }
     }
     if (d.zip_code) document.getElementById('zipInput').value = d.zip_code;
     if (d.usage_data) {

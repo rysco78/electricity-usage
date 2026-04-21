@@ -16,16 +16,20 @@ def extract_bill_data(pdf_path: str) -> dict:
     client = anthropic.AnthropicBedrock()
     msg = client.messages.create(
         model="us.anthropic.claude-sonnet-4-6",
-        max_tokens=256,
+        max_tokens=512,
         messages=[{
             "role": "user",
-            "content": f"""Extract the ESI ID and meter number from this Texas electricity bill text.
+            "content": f"""Extract billing details from this Texas electricity bill text.
 
-The ESI ID is always a 17-digit number, often labeled "ESI ID", "ESI:", or "ESIID".
-The meter number is a shorter alphanumeric identifier, often labeled "Meter Number", "Meter #", or "Meter No". Strip any trailing letters (e.g. "163106093LG" → "163106093").
+Fields to extract:
+- esi_id: 17-digit number, often labeled "ESI ID", "ESI:", or "ESIID"
+- meter_number: shorter alphanumeric identifier, labeled "Meter Number", "Meter #", or "Meter No". Strip trailing letters (e.g. "163106093LG" → "163106093")
+- provider: the electricity retailer/provider name (e.g. "Reliant Energy", "TXU Energy", "Green Mountain Energy")
+- plan_name: the rate plan or product name shown on the bill (e.g. "Simple Rate 12", "Stellar Home 24")
+- rate_cents_kwh: the energy charge rate in cents per kWh as a number (look for lines like "Energy Charge", "Electric Energy", or "kWh Charge" — use ONLY the per-kWh energy rate, not TDU/delivery charges, not a blended bill average)
 
 Return ONLY a raw JSON object, no markdown:
-{{"esi_id": "17-digit number or null", "meter_number": "numeric string or null"}}
+{{"esi_id": "17-digit number or null", "meter_number": "numeric string or null", "provider": "string or null", "plan_name": "string or null", "rate_cents_kwh": number or null}}
 
 Bill text:
 {text[:6000]}"""
@@ -45,6 +49,9 @@ Bill text:
         raise ValueError("Could not find an ESI ID in this bill. Please make sure it's a Texas electricity bill.")
 
     return {
-        "esi_id": result.get("esi_id"),
-        "meter_number": result.get("meter_number"),
+        "esi_id":          result.get("esi_id"),
+        "meter_number":    result.get("meter_number"),
+        "provider":        result.get("provider"),
+        "plan_name":       result.get("plan_name"),
+        "rate_cents_kwh":  result.get("rate_cents_kwh"),
     }
