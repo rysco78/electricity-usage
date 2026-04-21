@@ -2,6 +2,8 @@
 
 A Texas electricity plan optimizer that analyzes your usage history and recommends the best available plan for your home. Upload your bill and Green Button data, explore your consumption patterns, and let Claude AI pick the plan that will save you the most money.
 
+**Live:** [energy.ryanrscott.com](https://energy.ryanrscott.com)
+
 ---
 
 ## Features
@@ -11,6 +13,7 @@ A Texas electricity plan optimizer that analyzes your usage history and recommen
 - **Plan comparison** — fetches live plans from the [Power to Choose](https://powertochoose.org) registry, ranked by estimated monthly cost at your actual usage level
 - **AI recommendation** — Claude Sonnet analyzes your usage profile against the top plans and recommends the single best option with reasoning
 - **Session save/restore** — sign in with Auth0 to save your data and resume without re-uploading
+- **Mobile responsive** — full support for phone and tablet viewports
 
 ---
 
@@ -23,19 +26,20 @@ A Texas electricity plan optimizer that analyzes your usage history and recommen
 | Auth | Auth0 SPA JS v1 |
 | Database | AWS DynamoDB |
 | AI | Anthropic Claude Sonnet via AWS Bedrock |
+| Hosting | AWS EC2 (t3.micro) · nginx · Let's Encrypt |
 
 ---
 
 ## Prerequisites
 
 - Python 3.11+
-- AWS CLI configured (`~/.aws/credentials` or IAM role)
+- AWS account with DynamoDB and Bedrock access
+- AWS CLI configured (`~/.aws/credentials` or IAM role attached to EC2)
 - An [Auth0](https://auth0.com) account
-- An [AWS](https://aws.amazon.com) account with DynamoDB access
 
 ---
 
-## Setup
+## Local setup
 
 ### 1. Install dependencies
 
@@ -74,6 +78,8 @@ DYNAMODB_TABLE=energy-plan-sessions
 AWS_REGION=us-east-1
 ```
 
+AWS credentials are read from `~/.aws/credentials` or the environment. No extra config needed if the AWS CLI is already configured.
+
 ### 5. Start the server
 
 ```bash
@@ -81,6 +87,49 @@ uvicorn app:app --reload --port 8000
 ```
 
 Open `http://localhost:8000`.
+
+---
+
+## Production deployment (AWS EC2)
+
+The `deploy/` folder contains everything needed for an EC2 deployment.
+
+### Infrastructure
+
+| Resource | Details |
+|---|---|
+| Instance | t3.micro (free tier eligible), Ubuntu 22.04 LTS |
+| IP | Elastic IP for stable DNS |
+| IAM role | DynamoDB + Bedrock access via instance profile — no access keys required |
+| Web server | nginx reverse proxy → uvicorn on port 8000 |
+| SSL | Let's Encrypt via certbot (auto-renews) |
+
+### Deploy files
+
+| File | Purpose |
+|---|---|
+| `deploy/setup.sh` | One-shot server setup script — run once on a fresh instance |
+| `deploy/electricity-usage.service` | systemd service (auto-starts on reboot) |
+| `deploy/nginx.conf` | nginx reverse proxy config with long timeouts for Bedrock calls |
+
+### Deploying updates
+
+```bash
+# On the server
+cd ~/electricity-usage
+git pull
+sudo systemctl restart electricity-usage
+```
+
+### Auth0 production config
+
+Add your production domain to all three fields in the Auth0 app settings:
+
+- Allowed Callback URLs
+- Allowed Logout URLs
+- Allowed Web Origins
+
+Keep `http://localhost:8000` alongside the production URL for local dev to continue working.
 
 ---
 
