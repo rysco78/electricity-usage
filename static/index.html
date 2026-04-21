@@ -2151,7 +2151,6 @@
     document.getElementById('statTotal').innerHTML  = `${Math.round(total).toLocaleString()}<span> kWh</span>`;
     document.getElementById('statAvg').innerHTML    = `${Math.round(avgMo).toLocaleString()}<span> kWh</span>`;
     document.getElementById('statDaily').innerHTML  = `${avgDay.toFixed(1)}<span> kWh</span>`;
-    document.getElementById('statPeak').textContent = maxRow?.month ?? '—';
     document.getElementById('footerTotal').textContent = `${Math.round(total).toLocaleString()} kWh`;
     document.getElementById('footerDay').textContent   = `${Math.round(totalDay).toLocaleString()} kWh`;
     document.getElementById('footerNight').textContent = `${Math.round(totalNight).toLocaleString()} kWh`;
