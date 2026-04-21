@@ -1672,6 +1672,10 @@
             <div class="stat-label">Peak Month</div>
             <div class="stat-value" id="statPeak" style="font-size:28px;letter-spacing:-0.02em;">—</div>
           </div>
+          <div class="stat" id="statRateBox" style="display:none;">
+            <div class="stat-label">Avg Cost / kWh</div>
+            <div class="stat-value" id="statRate">—</div>
+          </div>
           <div class="stat" id="statMonthlyCostBox" style="display:none;">
             <div class="stat-label">Est. Monthly Cost</div>
             <div class="stat-value" id="statMonthlyCost">—</div>
@@ -2139,13 +2143,15 @@
     // Cost stats — only shown when rate is known from bill
     const rate = billData && billData.rate_cents_kwh;
     const hasCost = rate != null;
-    document.getElementById('costColHdr').style.display        = hasCost ? '' : 'none';
-    document.getElementById('footerCost').style.display        = hasCost ? '' : 'none';
+    document.getElementById('costColHdr').style.display         = hasCost ? '' : 'none';
+    document.getElementById('footerCost').style.display         = hasCost ? '' : 'none';
+    document.getElementById('statRateBox').style.display        = hasCost ? '' : 'none';
     document.getElementById('statMonthlyCostBox').style.display = hasCost ? '' : 'none';
     document.getElementById('statAnnualCostBox').style.display  = hasCost ? '' : 'none';
     if (hasCost) {
       const monthlyCost = (rate / 100) * avgMo;
       const annualCost  = (rate / 100) * total;
+      document.getElementById('statRate').innerHTML        = `${rate.toFixed(1)}<span>¢/kWh</span>`;
       document.getElementById('statMonthlyCost').innerHTML = `$${Math.round(monthlyCost).toLocaleString()}`;
       document.getElementById('statAnnualCost').innerHTML  = `$${Math.round(annualCost).toLocaleString()}`;
       document.getElementById('footerCost').textContent    = `$${Math.round(annualCost).toLocaleString()}`;
@@ -2714,6 +2720,7 @@
     document.getElementById('displayPlanBox').style.display='none';
     document.getElementById('displayRateBox').style.display='none';
     document.getElementById('currentPlanBanner').style.display='none';
+    document.getElementById('statRateBox').style.display='none';
     document.getElementById('statMonthlyCostBox').style.display='none';
     document.getElementById('statAnnualCostBox').style.display='none';
     document.getElementById('plansTableWrap').style.display='none';
