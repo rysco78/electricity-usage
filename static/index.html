@@ -1672,6 +1672,14 @@
             <div class="stat-label">Peak Month</div>
             <div class="stat-value" id="statPeak" style="font-size:28px;letter-spacing:-0.02em;">—</div>
           </div>
+          <div class="stat" id="statMonthlyCostBox" style="display:none;">
+            <div class="stat-label">Est. Monthly Cost</div>
+            <div class="stat-value" id="statMonthlyCost">—</div>
+          </div>
+          <div class="stat" id="statAnnualCostBox" style="display:none;">
+            <div class="stat-label">Est. Annual Cost</div>
+            <div class="stat-value" id="statAnnualCost">—</div>
+          </div>
         </div>
 
         <div class="chart-section">
@@ -1711,6 +1719,7 @@
                 <th>Day</th>
                 <th>Night</th>
                 <th>Avg/Day</th>
+                <th id="costColHdr" style="display:none;">Est. Cost</th>
                 <th>vs avg</th>
               </tr>
             </thead>
@@ -1721,7 +1730,9 @@
                 <td id="footerTotal">—</td>
                 <td id="footerDay">—</td>
                 <td id="footerNight">—</td>
-                <td></td><td></td>
+                <td></td>
+                <td id="footerCost" style="display:none;font-weight:700;color:var(--accent);">—</td>
+                <td></td>
               </tr>
             </tfoot>
           </table>
@@ -2125,18 +2136,37 @@
     document.getElementById('footerDay').textContent   = `${Math.round(totalDay).toLocaleString()} kWh`;
     document.getElementById('footerNight').textContent = `${Math.round(totalNight).toLocaleString()} kWh`;
 
+    // Cost stats — only shown when rate is known from bill
+    const rate = billData && billData.rate_cents_kwh;
+    const hasCost = rate != null;
+    document.getElementById('costColHdr').style.display        = hasCost ? '' : 'none';
+    document.getElementById('footerCost').style.display        = hasCost ? '' : 'none';
+    document.getElementById('statMonthlyCostBox').style.display = hasCost ? '' : 'none';
+    document.getElementById('statAnnualCostBox').style.display  = hasCost ? '' : 'none';
+    if (hasCost) {
+      const monthlyCost = (rate / 100) * avgMo;
+      const annualCost  = (rate / 100) * total;
+      document.getElementById('statMonthlyCost').innerHTML = `$${Math.round(monthlyCost).toLocaleString()}`;
+      document.getElementById('statAnnualCost').innerHTML  = `$${Math.round(annualCost).toLocaleString()}`;
+      document.getElementById('footerCost').textContent    = `$${Math.round(annualCost).toLocaleString()}`;
+    }
+
     const tbody = document.getElementById('usageTableBody');
     tbody.innerHTML = monthly.map(r => {
       const diff = r.kwh - avgMo;
       const pct  = avgMo > 0 ? Math.round((diff / avgMo) * 100) : 0;
       const cls  = diff > 0 ? 'hi' : (diff < 0 ? 'lo' : '');
       const sign = pct > 0 ? '+' : '';
+      const costCell = hasCost
+        ? `<td style="color:var(--accent);font-weight:600;">$${Math.round((rate/100)*r.kwh).toLocaleString()}</td>`
+        : '';
       return `<tr>
         <td class="month-cell">${r.month}</td>
         <td>${r.kwh.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
         <td class="day-cell">${r.day_kwh.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
         <td class="night-cell">${r.night_kwh.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
         <td>${r.avg_daily_kwh.toFixed(1)}</td>
+        ${costCell}
         <td class="${cls}">${sign}${pct}%</td>
       </tr>`;
     }).join('');
@@ -2460,13 +2490,14 @@
       const idx = allPlans.indexOf(p);
       let savingsCell = '';
       if (hasRate && currentMonthly != null) {
-        const diff = currentMonthly - p.estimated_monthly;
-        if (diff > 0.5) {
-          savingsCell = `<td class="save-positive">-$${diff.toFixed(0)}/mo</td>`;
-        } else if (diff < -0.5) {
-          savingsCell = `<td class="save-negative">+$${Math.abs(diff).toFixed(0)}/mo</td>`;
+        const diff    = currentMonthly - p.estimated_monthly;
+        const diffPct = Math.round((diff / currentMonthly) * 100);
+        if (diffPct > 0) {
+          savingsCell = `<td class="save-positive">Save ${diffPct}%<div style="font-size:11px;font-weight:600;opacity:0.8;">-$${diff.toFixed(0)}/mo</div></td>`;
+        } else if (diffPct < 0) {
+          savingsCell = `<td class="save-negative">${Math.abs(diffPct)}% more<div style="font-size:11px;opacity:0.7;">+$${Math.abs(diff).toFixed(0)}/mo</div></td>`;
         } else {
-          savingsCell = `<td style="color:var(--text-muted);">≈ same</td>`;
+          savingsCell = `<td style="color:var(--text-muted);font-size:12px;">≈ same</td>`;
         }
       } else {
         savingsCell = hasRate ? '<td>—</td>' : '';
@@ -2683,6 +2714,8 @@
     document.getElementById('displayPlanBox').style.display='none';
     document.getElementById('displayRateBox').style.display='none';
     document.getElementById('currentPlanBanner').style.display='none';
+    document.getElementById('statMonthlyCostBox').style.display='none';
+    document.getElementById('statAnnualCostBox').style.display='none';
     document.getElementById('plansTableWrap').style.display='none';
     document.getElementById('filterRow').style.display='none';
     document.getElementById('zipInput').value='';
