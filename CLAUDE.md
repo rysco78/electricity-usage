@@ -76,3 +76,69 @@ The entire frontend JS lives in the single `<script>` block in `static/index.htm
 ```bash
 awk '/<script>/{p=1;next} /<\/script>/{p=0} p' static/index.html > /tmp/check.js && node --check /tmp/check.js
 ```
+
+## Production deployment
+
+Live at [energy.ryanrscott.com](https://energy.ryanrscott.com) on an AWS EC2 t3.micro (Ubuntu 22.04, Elastic IP). IAM instance profile grants DynamoDB + Bedrock access — no access keys in `.env` needed on EC2.
+
+### Deploy files
+
+| File | Purpose |
+|---|---|
+| `deploy/setup.sh` | One-shot setup for a fresh Ubuntu instance |
+| `deploy/electricity-usage.service` | systemd unit — auto-starts on reboot, `--workers 2` |
+| `deploy/nginx.conf` | nginx reverse proxy; `proxy_read_timeout 300s` for Bedrock; `client_max_body_size 20M` |
+
+### Deploying updates
+
+```bash
+ssh ubuntu@<elastic-ip>
+cd ~/electricity-usage
+git pull
+sudo systemctl restart electricity-usage
+```
+
+### Ubuntu setup gotcha
+
+Install `libffi-dev` before pip packages or `cffi`/`cryptography` will fail to build:
+
+```bash
+sudo apt-get install -y libffi-dev
+pip install --force-reinstall cffi cryptography python-jose[cryptography]
+```
+
+### Auth0 production config
+
+Both `http://localhost:8000` and `https://energy.ryanrscott.com` must be in all three Auth0 app fields (Allowed Callback URLs, Allowed Logout URLs, Allowed Web Origins) so local dev and production work simultaneously.
+
+## Responsive CSS breakpoints
+
+All responsive styles are in `static/index.html`. Key breakpoints:
+
+| Breakpoint | What it handles |
+|---|---|
+| `760px` | `.charts-duo` switches from side-by-side to stacked |
+| `700px` | Step tracker labels hidden; restart-row buttons stack; chart/table horizontal scroll; stat card padding reduced |
+| `600px` | Footer stacks |
+| `540px` | Shell padding tightens; header wraps; auth button goes full-width below logo |
+
+### Chart horizontal scroll pattern
+
+Chart.js does not scroll natively. The working approach is:
+
+```css
+.chart-section { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.chart-wrap    { min-width: 320px; }
+```
+
+The chart sizes to `min-width` and the section scrolls. Do **not** set `overflow` on `.chart-wrap` itself — that breaks Chart.js resize logic.
+
+### Full-width stacked buttons
+
+Buttons that need to stack full-width on mobile require both flex direction and explicit margin overrides for any inline `margin-left: auto` styles:
+
+```css
+.restart-row { flex-direction: column; align-items: stretch; gap: 10px; }
+.restart-row .btn { justify-content: center; }
+#restartBtn2, #saveBtn { margin-left: 0 !important; }
+```
