@@ -1333,6 +1333,41 @@
       .ai-rec-plan-name { font-size: 26px; }
       .ai-rec-row { grid-template-columns: 1fr; }
       .meter-grid { grid-template-columns: 1fr; }
+
+      /* Step tracker — hide labels, show dots + connectors only */
+      .step-label { display: none; }
+      .step-connector { min-width: 12px; margin: 0 8px; }
+
+      /* Restart-row buttons — stack vertically */
+      .restart-row { flex-direction: column; align-items: stretch; gap: 10px; }
+      .restart-row .btn { justify-content: center; text-align: center; }
+      #restartBtn2 { margin-left: 0 !important; }
+    }
+
+    /* ── Header responsive (tighter breakpoint) ───────────── */
+    @media (max-width: 540px) {
+      .shell { padding: 24px 16px 60px; }
+
+      /* Let header wrap: logo+toggle on row 1, auth bar on row 2 */
+      header {
+        flex-wrap: wrap;
+        row-gap: 10px;
+        margin-bottom: 24px;
+      }
+      .header-left { flex: 1; min-width: 0; }
+      .logo { font-size: 18px; }
+      .logo-icon { width: 36px; height: 36px; }
+
+      /* Auth bar drops to its own full-width row */
+      .header-auth {
+        order: 3;
+        width: 100%;
+        margin: 0;
+      }
+
+      /* Theme toggle stays top-right — just shrink it */
+      .theme-toggle { padding: 8px 12px; }
+      #themeLabel { display: none; }
     }
 
     /* ── Footer ───────────────────────────────────────────── */
