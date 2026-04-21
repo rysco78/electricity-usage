@@ -1343,6 +1343,25 @@
       .restart-row .btn { justify-content: center; text-align: center; }
       #restartBtn2 { margin-left: 0 !important; }
       #saveBtn     { margin-left: 0 !important; }
+
+      /* Charts — horizontal scroll so nothing gets clipped */
+      .chart-section {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .chart-wrap {
+        min-width: 320px;
+      }
+
+      /* Tables — horizontal scroll */
+      .table-wrap {
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+
+      /* Stats grid — smaller values so 2-col fits tight screens */
+      .stat { padding: 20px 14px 18px; }
+      .stat-value { font-size: 32px; }
     }
 
     /* ── Header responsive (tighter breakpoint) ───────────── */
