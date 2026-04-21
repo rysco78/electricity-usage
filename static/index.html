@@ -1927,6 +1927,26 @@
       </div>
     </div>
 
+    <!-- Current plan comparison band -->
+    <div id="modalCompareBand" style="display:none; margin: 0 -28px 20px; padding: 14px 28px; background: var(--surface-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+      <div style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px;">vs. Your Current Plan</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); font-weight:600; margin-bottom:3px;">Current Est/Mo</div>
+          <div style="font-size:20px; font-weight:800; line-height:1;" id="modalCmpCurrent">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); font-weight:600; margin-bottom:3px;">This Plan Est/Mo</div>
+          <div style="font-size:20px; font-weight:800; line-height:1;" id="modalCmpNew">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--text-muted); font-weight:600; margin-bottom:3px;">Monthly Change</div>
+          <div style="font-size:20px; font-weight:800; line-height:1;" id="modalCmpSave">—</div>
+        </div>
+      </div>
+      <div id="modalCmpAnnual" style="margin-top:10px; font-size:12px; font-weight:600; color:var(--text-muted);"></div>
+    </div>
+
     <!-- Rate editor -->
     <div class="modal-rate-editor" id="modalRateEditor">
       <div class="modal-rate-warning" id="modalRateWarning" style="display:none;">
@@ -2341,6 +2361,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail||'Failed to fetch plans.');
       allPlans = data.plans;
+      enrichPlans();
       activeType='all'; activeTerm='all'; activeCompanies=new Set(); renewOnly=false; touOnly=false;
       document.querySelectorAll('[data-filter-type]').forEach(b=>b.classList.toggle('active',b.dataset.filterType==='all'));
       document.getElementById('filterRenew').classList.remove('active');
@@ -2452,11 +2473,23 @@
     return p;
   }
 
+  function enrichPlans() {
+    if (!usageData || !usageData.monthly || !usageData.monthly.length) return;
+    const months = usageData.monthly;
+    allPlans.forEach(p => {
+      const annual = months.reduce((s, m) => s + (m.kwh || 0) * p.rate_cents_kwh / 100, 0);
+      p.precise_monthly = annual / months.length;
+      p.precise_annual  = annual;
+    });
+  }
+
   function renderPlans() {
     // ── Current plan banner ──────────────────────────────────
     const hasRate = billData && billData.rate_cents_kwh != null;
-    const avgKwh  = usageData && usageData.avg_monthly_kwh;
-    const currentMonthly = hasRate && avgKwh ? (billData.rate_cents_kwh / 100) * avgKwh : null;
+    const curMonths = usageData && usageData.monthly;
+    const currentMonthly = (hasRate && curMonths && curMonths.length)
+      ? curMonths.reduce((s,m)=>s+(m.kwh||0),0) * billData.rate_cents_kwh / 100 / curMonths.length
+      : null;
     const banner  = document.getElementById('currentPlanBanner');
     const savingsHdr = document.getElementById('savingsColHdr');
     if (hasRate) {
@@ -2494,9 +2527,10 @@
       if(p.fact_sheet) links.push(`<a class="plan-link" href="${escHtml(p.fact_sheet)}" target="_blank">EFL</a>`);
       if(p.go_to_plan) links.push(`<a class="plan-link" href="${escHtml(p.go_to_plan)}" target="_blank">Sign Up →</a>`);
       const idx = allPlans.indexOf(p);
+      const estMo = p.precise_monthly != null ? p.precise_monthly : p.estimated_monthly;
       let savingsCell = '';
       if (hasRate && currentMonthly != null) {
-        const diff    = currentMonthly - p.estimated_monthly;
+        const diff    = currentMonthly - estMo;
         const diffPct = Math.round((diff / currentMonthly) * 100);
         if (diffPct > 0) {
           savingsCell = `<td class="save-positive">Save ${diffPct}%<div style="font-size:11px;font-weight:600;opacity:0.8;">-$${diff.toFixed(0)}/mo</div></td>`;
@@ -2508,11 +2542,10 @@
       } else {
         savingsCell = hasRate ? '<td>—</td>' : '';
       }
-      const colspan = hasRate ? 7 : 6;
       return `<tr>
         <td class="plan-cell" data-idx="${idx}"><div class="plan-company">${escHtml(p.company)}</div><div class="plan-name">${escHtml(p.plan)}</div></td>
         <td>${p.rate_cents_kwh.toFixed(1)}¢</td>
-        <td style="color:var(--accent);font-weight:700;">$${p.estimated_monthly.toFixed(0)}</td>
+        <td style="color:var(--accent);font-weight:700;">$${Math.round(estMo)}</td>
         ${savingsCell}
         <td>${p.term_months>1?p.term_months+'mo':'Month'}</td>
         <td style="text-align:left;">${badges.join(' ')}</td>
@@ -2584,6 +2617,33 @@
 
       document.getElementById('modalAnnual').textContent = '$' + Math.round(annual).toLocaleString();
       document.getElementById('modalAvgMo').textContent  = '$' + Math.round(avgMonth).toLocaleString();
+
+      // ── Current plan comparison ────────────────────────────
+      const compareBand = document.getElementById('modalCompareBand');
+      if (billData && billData.rate_cents_kwh != null && monthly.length) {
+        const curRate    = billData.rate_cents_kwh;
+        const curAnnual  = monthly.reduce((s, m) => s + (m.kwh || 0) * curRate / 100, 0);
+        const curMonthly = curAnnual / monthly.length;
+        const saveMo     = curMonthly - avgMonth;
+        const savePct    = curMonthly > 0 ? Math.round((saveMo / curMonthly) * 100) : 0;
+        document.getElementById('modalCmpCurrent').textContent = '$' + Math.round(curMonthly).toLocaleString();
+        document.getElementById('modalCmpNew').textContent     = '$' + Math.round(avgMonth).toLocaleString();
+        const saveEl = document.getElementById('modalCmpSave');
+        const annualEl = document.getElementById('modalCmpAnnual');
+        if (saveMo > 0.5) {
+          saveEl.innerHTML   = `<span class="save-positive">-$${Math.round(saveMo)}/mo</span>`;
+          annualEl.innerHTML = `<span class="save-positive">Save $${Math.round(saveMo * 12).toLocaleString()}/year &nbsp;·&nbsp; ${savePct}% cheaper than your current plan</span>`;
+        } else if (saveMo < -0.5) {
+          saveEl.innerHTML   = `<span class="save-negative">+$${Math.round(Math.abs(saveMo))}/mo</span>`;
+          annualEl.innerHTML = `<span class="save-negative">${Math.abs(savePct)}% more expensive than your current plan</span>`;
+        } else {
+          saveEl.textContent   = '≈ same';
+          annualEl.textContent = 'About the same cost as your current plan';
+        }
+        compareBand.style.display = '';
+      } else {
+        compareBand.style.display = 'none';
+      }
 
       // Table
       const totDay   = rows.reduce((s, r) => s + r.dayCost,   0);
